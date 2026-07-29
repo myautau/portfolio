@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 const R = "/reference/";
+const referenceUrl = name => `${R}${name.replace(/\.(?:png|jpe?g)$/i, ".webp")}`;
 
 const projects = [
   { title: "Pulse", kind: "Graphic Design", image: "project-5.jpg", ratio: "4 / 5" },
@@ -66,7 +67,7 @@ function RefSection({ title, children, className = "" }) {
 function ReferenceAbout() {
   return <section className="ref-about" id="reference-about">
     <header className="ref-profile">
-      <img src={`${R}avatar.png`} alt="Kima Davidson" />
+      <img src={referenceUrl("avatar.png")} alt="Kima Davidson" />
       <div><h1>Kima Davidson</h1><p>Digital Designer</p></div>
     </header>
 
@@ -112,7 +113,7 @@ function ReferenceAbout() {
 
     <RefSection title="Testimonials.">
       <div className="ref-testimonials">{testimonials.map(([photo, name, role, quote]) => <article key={name}>
-        <p>“{quote}”</p><div><img src={`${R}${photo}`} alt="" /><span><b>{name}</b><small>{role}</small></span></div>
+        <p>“{quote}”</p><div><img src={referenceUrl(photo)} alt="" /><span><b>{name}</b><small>{role}</small></span></div>
       </article>)}</div>
     </RefSection>
 
@@ -129,7 +130,7 @@ function ReferenceAbout() {
 
 function RefCard({ item }) {
   return <a className="ref-card" style={{ aspectRatio: item.ratio }} href="https://drab-guides-391061.framer.app" target="_blank" rel="noreferrer">
-    <img src={`${R}${item.image}`} alt={`${item.title} — ${item.kind}`} />
+    <img src={referenceUrl(item.image)} alt={`${item.title} — ${item.kind}`} />
     <span className="ref-card-shade" />
     <span className="ref-card-meta"><b>{item.title}</b><small>{item.kind}</small></span>
   </a>;

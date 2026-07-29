@@ -5,7 +5,7 @@ import ReferencePage from "./ReferencePage";
 import { chatgptDarkIcon } from "./toolIconData";
 
 const A = "/assets/";
-const assetUrl = name => `${A}${name.endsWith(".png") ? `${name.slice(0, -4)}.webp` : name}`;
+const assetUrl = name => `${A}${name.replace(/\.(?:png|jpe?g)$/i, ".webp")}`;
 
 const shortRussianWords = "а|без|в|во|до|за|и|из|к|ко|на|над|не|но|о|об|обо|от|по|под|при|про|с|со|у";
 const hangingWordPattern = new RegExp(`(?<![\\p{L}\\p{N}])(${shortRussianWords})[ \\t]+(?=[\\p{L}\\p{N}])`, "giu");
