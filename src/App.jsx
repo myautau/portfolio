@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowUp, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { siClaude } from "simple-icons";
 import ReferencePage from "./ReferencePage";
+import MetricsTrainer from "./MetricsTrainer";
 import { chatgptDarkIcon } from "./toolIconData";
 
 const A = "/assets/";
@@ -439,11 +440,12 @@ function ContactPage() { return <main className="contact-shell"><Link href="/" c
 
 export function App() {
   const route = window.location.pathname.replace(/\/$/, "") || "/";
+  if (route === "/" || route === "/metrics") return <MetricsTrainer/>;
   if (route === "/reference") return <ReferencePage/>;
   if (route === "/hypothesis-test") return <TypographedPage><Home hypothesis/></TypographedPage>;
   if (cases[route]) return <TypographedPage><CasePage data={cases[route]}/></TypographedPage>;
   if (route === "/cv") return <TypographedPage><ResumePage/></TypographedPage>;
   if (route === "/contact") return <TypographedPage><ContactPage/></TypographedPage>;
-  if (route === "/copy") return <TypographedPage><Home/></TypographedPage>;
+  if (route === "/copy" || route === "/portfolio") return <TypographedPage><Home hypothesis/></TypographedPage>;
   return <TypographedPage><Home hypothesis/></TypographedPage>;
 }
