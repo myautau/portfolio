@@ -6,7 +6,8 @@ import { chatgptDarkIcon } from "./toolIconData";
 const ReferencePage = lazy(() => import("./ReferencePage"));
 const MetricsTrainer = lazy(() => import("./MetricsTrainer"));
 
-const A = "/assets/";
+const A = `${import.meta.env.BASE_URL}assets/`;
+const V = `${import.meta.env.BASE_URL}videos/`;
 const assetUrl = name => `${A}${name.replace(/\.(?:png|jpe?g)$/i, ".webp")}`;
 
 const shortRussianWords = "а|без|в|во|до|за|и|из|к|ко|на|над|не|но|о|об|обо|от|по|под|при|про|с|со|у";
@@ -140,9 +141,9 @@ const companyLogos = [
 ];
 
 const tools = [
-  ["/assets/figma-logo.svg", "Figma", "Проектирование интерфейсов", "figma"],
+  [`${A}figma-logo.svg`, "Figma", "Проектирование интерфейсов", "figma"],
   [chatgptDarkIcon, "ChatGPT", "Исследования и тексты", "chatgpt"],
-  ["/assets/codex-logo-transparent.webp", "Codex", "Прототипирование в коде", "codex"],
+  [`${A}codex-logo-transparent.webp`, "Codex", "Прототипирование в коде", "codex"],
   [siClaude, "Claude", "Аналитика и идеи", "claude"],
 ];
 
@@ -207,7 +208,7 @@ function ProjectCard({ project, priority = false }) {
     {project.mockup
       ? <span className="mockup-cover"><span className="mockup-device"><img src={assetUrl(project.image)} alt="" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" style={{ objectPosition: project.mockupPosition || "center", "--mockup-scale": project.mockupScale || 1 }}/></span></span>
       : project.video
-      ? <LazyVideo src={`/videos/${project.video}`} poster={assetUrl(project.image)} autoPlay muted loop playsInline style={{ objectPosition: project.position || "center" }} aria-label={`${project.title} — видео-превью`}/>
+      ? <LazyVideo src={`${V}${project.video}`} poster={assetUrl(project.image)} autoPlay muted loop playsInline style={{ objectPosition: project.position || "center" }} aria-label={`${project.title} — видео-превью`}/>
       : <img className={project.imageClass || ""} src={assetUrl(project.image)} alt="" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" style={{ objectPosition: project.position || "center", objectFit: project.fit || "cover" }}/>
     }
     <span className="work-gradient"/>
@@ -319,12 +320,12 @@ const cases = {
     gallery: [
       "ski-hand-interface-new.png",
       "ski-f0077e8e46537e02.avif",
-      { type: "video", src: "/videos/ls1FrvqnYmzT7Z7QrqCSwI1WANY.mp4", caption: "Все разделы главной страницы: бронирование, меню, отели и шале, афиша, развлечения, рестораны и бары" },
+      { type: "video", src: `${V}ls1FrvqnYmzT7Z7QrqCSwI1WANY.mp4`, caption: "Все разделы главной страницы: бронирование, меню, отели и шале, афиша, развлечения, рестораны и бары" },
       "ski-a6951fee0dc0d8da.avif",
       "ski-4e5ac801adcc97b3.avif",
       "ski-ebd18ef95ae2da98.avif",
       "ski-eb839b4dfdf80618.avif",
-      { type: "video", src: "/videos/9zLzrZKGw9fUPqGKrnHkPG2Mny4.mp4", caption: "Выбор канатной дороги на карте и переход к её карточке" },
+      { type: "video", src: `${V}9zLzrZKGw9fUPqGKrnHkPG2Mny4.mp4`, caption: "Выбор канатной дороги на карте и переход к её карточке" },
       "ski-06-hq.png",
       "ski-07-hq.png",
       "ski-151861387452668e.avif",
@@ -344,13 +345,13 @@ const cases = {
       ["Финальный дизайн","Собрала три состояния Навигатора, центр уведомлений и четыре сторис."],
       ["Результаты","Посещаемость выросла с 17% до 25%, MAU — со 130 до 170 тысяч, конверсия сторис достигла 28%."],
     ],
-    gallery: ["vmeste-01-hq.png","vmeste-7d7d2baa6f042ebf.avif","vmeste-final-1.png","vmeste-c2e5b4da20d62cee.avif","vmeste-65f1e8d4f0648310.avif",{ type: "video", src: "/videos/vmeste-navigation.mp4" },"other-ba1a805d27423031.webp","other-portrait-02-hq.png"]
+    gallery: ["vmeste-01-hq.png","vmeste-7d7d2baa6f042ebf.avif","vmeste-final-1.png","vmeste-c2e5b4da20d62cee.avif","vmeste-65f1e8d4f0648310.avif",{ type: "video", src: `${V}vmeste-navigation.mp4` },"other-ba1a805d27423031.webp","other-portrait-02-hq.png"]
   },
   "/investments": {
     title: "Инвестиции", subtitle: "Концепт мобильного приложения для управления инвестициями", meta: [["Продукт","Мобильное приложение"],["Направление","Fintech"],["Платформа","iOS"]],
     intro: "Концепт для контроля портфеля, динамики и инвестиционных продуктов.",
     sections: [["Задача","Сделать сложные финансовые данные понятными и доступными."],["Структура","Объединить портфель, динамику и операции в одном сценарии."],["Визуальная система","Тёмная тема фокусирует внимание на данных и изменениях."]],
-    gallery: [{ type: "video", src: "/videos/investments-hq.mp4" }]
+    gallery: [{ type: "video", src: `${V}investments-hq.mp4` }]
   },
   "/trinity-monsters": {
     title: "Trinity Monsters", subtitle: "Концепт раздела вакансий в эстетике Windows 98", meta: [["Продукт","Раздел вакансий"],["Направление","HR"],["Платформа","Web"]],
@@ -370,8 +371,8 @@ const cases = {
     intro: "Мобильный e-commerce-концепт с каталогом, подборками и быстрыми сценариями.",
     sections: [["Задача","Собрать насыщенный контент в понятную структуру и сохранить выразительную визуальную подачу."],["Интерфейс","Карточки, подборки и навигация объединены в компактную мобильную систему."],["Визуальная система","Тёмная основа и цветовые акценты помогают разделять контент и выделять ключевые действия."]],
     gallery: [
-      { type: "video", src: "/videos/HRukF4ca0a0qfNKqktNqpjFcoL4.mp4" },
-      { type: "video", src: "/videos/TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4" }
+      { type: "video", src: `${V}HRukF4ca0a0qfNKqktNqpjFcoL4.mp4` },
+      { type: "video", src: `${V}TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4` }
     ]
   },
   "/hypothesis-concepts": {
@@ -379,7 +380,7 @@ const cases = {
     intro: "Подборка мобильных и веб-концептов.",
     sections: [["Подборка","Экспериментальные интерфейсы для e-commerce, travel, Web3, образования, HR и сервисных сценариев."],["Подход","В каждом концепте проверяется отдельная визуальная идея, структура или механика взаимодействия."]],
     gallery: [
-      { type: "video", src: "/videos/HRukF4ca0a0qfNKqktNqpjFcoL4.mp4" },
+      { type: "video", src: `${V}HRukF4ca0a0qfNKqktNqpjFcoL4.mp4` },
       "step-app-01-hq.png",
       "step-app-02-hq.png",
       "stoloto-hq.png",
@@ -389,7 +390,7 @@ const cases = {
       "trinity-04-hq.png",
       "flight-concept-hq.png",
       "other-screen-hq.png",
-      { type: "video", src: "/videos/TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4" },
+      { type: "video", src: `${V}TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4` },
       "other-portrait-01-hq.png"
     ]
   },
@@ -409,7 +410,7 @@ const cases = {
     title: "Туризм", subtitle: "Концепт мобильного приложения для планирования путешествий", meta: [["Продукт","Мобильное приложение"],["Направление","Travel"],["Платформа","iOS"]],
     intro: "Концепт выбора направлений и активностей по интересам.",
     sections: [["Идея","Сделать планирование путешествия лёгким выбором впечатлений."],["Механика","Карточки мест можно пропускать или добавлять в маршрут."],["Визуальная система","Крупные фотографии, мягкие градиенты и плавная анимация."]],
-    gallery: [{ type: "video", src: "/videos/TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4" }]
+    gallery: [{ type: "video", src: `${V}TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4` }]
   },
   "/flight-tracker": {
     title: "Авиарейсы", subtitle: "Концепт приложения для отслеживания перелётов", meta: [["Продукт","Мобильное приложение"],["Направление","Travel"],["Платформа","iOS"]],
