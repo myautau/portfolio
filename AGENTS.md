@@ -12,3 +12,4 @@ When implementing from a selected generated mock, treat that image as the source
 - The user specifically likes the reference typography. Use Switzer for supported glyphs and a visually close Cyrillic fallback for Russian copy.
 - Preserve Viktoria Matveeva's portfolio content, projects, resume, contact details, and existing local media assets when applying this design direction.
 - Keep the untouched visual reference recreation available separately at `/reference` for side-by-side comparison with Viktoria's portfolio.
+- In the «Вместе.ру» case, preserve each gallery asset's original composition and pink backing. Apply the shared small corner radius only to the outer gallery and lightbox containers; do not flatten, crop, pad, or otherwise redraw the source images to create rounding.
