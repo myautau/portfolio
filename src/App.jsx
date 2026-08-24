@@ -8,6 +8,15 @@ const MetricsTrainer = lazy(() => import("./MetricsTrainer"));
 
 const A = `${import.meta.env.BASE_URL}assets/`;
 const V = `${import.meta.env.BASE_URL}videos/`;
+const BASE_PATH = import.meta.env.BASE_URL.replace(/\/$/, "");
+const withBasePath = href => href.startsWith("/") && !href.startsWith("//") ? `${BASE_PATH}${href}` || "/" : href;
+const stripBasePath = pathname => {
+  const normalized = pathname.replace(/\/$/, "") || "/";
+  if (BASE_PATH && (normalized === BASE_PATH || normalized.startsWith(`${BASE_PATH}/`))) {
+    return normalized.slice(BASE_PATH.length) || "/";
+  }
+  return normalized;
+};
 const assetUrl = name => `${A}${name.replace(/\.(?:png|jpe?g)$/i, ".webp")}`;
 
 const shortRussianWords = "а|без|в|во|до|за|и|из|к|ко|на|над|не|но|о|об|обо|от|по|под|при|про|с|со|у";
@@ -40,15 +49,16 @@ function TypographedPage({ children }) {
 
 function Link({ href, children, className = "", onClick, ...props }) {
   const external = /^(https?:|mailto:)/.test(href);
+  const targetHref = withBasePath(href);
   const navigate = (event) => {
     onClick?.(event);
     if (event.defaultPrevented || external || href.startsWith("#") || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
-    window.history.pushState({}, "", href);
+    window.history.pushState({}, "", targetHref);
     window.dispatchEvent(new PopStateEvent("popstate"));
     window.scrollTo({ top: 0, left: 0 });
   };
-  return <a href={href} className={className} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined} onClick={navigate} {...props}>{children}</a>;
+  return <a href={targetHref} className={className} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined} onClick={navigate} {...props}>{children}</a>;
 }
 
 function LazyVideo({ src, autoPlay = true, ...props }) {
@@ -116,7 +126,7 @@ const asHypothesisCard = project => {
   if (!hypothesisMockups[project.href]) return project;
   const card = { ...project, ...hypothesisMockups[project.href], video: undefined, ratio: "1 / 1", mockup: true, fit: undefined, imageClass: undefined };
   return project.href === "/concept"
-    ? { ...card, title: "Другие работы и концепты", kind: "Разные концепты для мобилки и веба", href: "/hypothesis-concepts" }
+    ? { ...card, title: "Другие работы и концепты", kind: "Разные концепты для мобилки и веба", href: "/other-projects" }
     : card;
 };
 
@@ -375,7 +385,7 @@ const cases = {
       { type: "video", src: `${V}TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4` }
     ]
   },
-  "/hypothesis-concepts": {
+  "/other-projects": {
     title: "Другие работы и концепты", subtitle: "Разные концепты для мобилки и веба", meta: [["Направление","Digital concepts"],["Платформа","iOS, Android, Web"]],
     intro: "Подборка мобильных и веб-концептов.",
     sections: [],
@@ -519,9 +529,9 @@ function ResumePage() {
 function ContactPage() { return <main className="contact-shell"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><div><h1>Связаться.</h1><p>Предлагаю написать и назначить созвон для знакомства.</p><Link href="mailto:myautau13@gmail.com">myautau13@gmail.com</Link><Link href="https://t.me/myautau">Telegram: @myautau</Link></div></main>; }
 
 export function App() {
-  const [route, setRoute] = useState(() => window.location.pathname.replace(/\/$/, "") || "/");
+  const [route, setRoute] = useState(() => stripBasePath(window.location.pathname));
   useEffect(() => {
-    const syncRoute = () => setRoute(window.location.pathname.replace(/\/$/, "") || "/");
+    const syncRoute = () => setRoute(stripBasePath(window.location.pathname));
     window.addEventListener("popstate", syncRoute);
     return () => window.removeEventListener("popstate", syncRoute);
   }, []);
@@ -529,6 +539,7 @@ export function App() {
   if (route === "/") return <TypographedPage key={route}><Home hypothesis/></TypographedPage>;
   if (route === "/reference") return <Suspense fallback={null}><ReferencePage/></Suspense>;
   if (route === "/hypothesis-test") return <TypographedPage key={route}><Home hypothesis/></TypographedPage>;
+  if (route === "/hypothesis-concepts") return <TypographedPage key={route}><CasePage data={cases["/other-projects"]}/></TypographedPage>;
   if (cases[route]) return <TypographedPage key={route}><CasePage data={cases[route]}/></TypographedPage>;
   if (route === "/cv") return <TypographedPage key={route}><ResumePage/></TypographedPage>;
   if (route === "/contact") return <TypographedPage key={route}><ContactPage/></TypographedPage>;
