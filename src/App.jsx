@@ -378,7 +378,7 @@ const cases = {
   "/hypothesis-concepts": {
     title: "Другие работы и концепты", subtitle: "Разные концепты для мобилки и веба", meta: [["Направление","Digital concepts"],["Платформа","iOS, Android, Web"]],
     intro: "Подборка мобильных и веб-концептов.",
-    sections: [["Подборка","Экспериментальные интерфейсы для e-commerce, travel, Web3, образования, HR и сервисных сценариев."],["Подход","В каждом концепте проверяется отдельная визуальная идея, структура или механика взаимодействия."]],
+    sections: [],
     gallery: [
       { type: "video", src: `${V}HRukF4ca0a0qfNKqktNqpjFcoL4.mp4` },
       "step-app-01-hq.png",
