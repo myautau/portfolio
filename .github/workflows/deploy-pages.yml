@@ -20,22 +20,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm install --no-audit --no-fund
       - name: Build site
         env:
           GITHUB_ACTIONS: true
         run: |
-          pnpm run build
+          npm run build
           cp dist/client/index.html dist/client/404.html
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
