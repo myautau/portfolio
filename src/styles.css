@@ -137,7 +137,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 .gallery-image-button:focus-visible{outline:2px solid #fff;outline-offset:-2px}
 .lightbox{position:fixed;z-index:1000;inset:0;overflow:hidden;background:rgba(0,0,0,.92);backdrop-filter:blur(14px);animation:lightbox-in .2s ease-out}
 .lightbox-scroll{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:56px 24px;cursor:default;scrollbar-width:thin;scrollbar-color:#555 transparent}
-.lightbox-scroll>img,.lightbox-scroll>video{display:block;box-sizing:border-box;width:min(100%,1600px);max-width:1600px;max-height:calc(100dvh - 112px);height:auto;margin:auto;overflow:hidden;object-fit:contain;border-radius:var(--case-media-radius)!important;background:#1b1b1b;clip-path:inset(0 round var(--case-media-radius));box-shadow:0 24px 80px #0008;cursor:default}
+.lightbox-scroll>img,.lightbox-scroll>video{display:block;box-sizing:border-box;width:min(100%,1320px);max-width:1320px;max-height:calc(100dvh - 112px);height:auto;margin:auto;overflow:hidden;object-fit:contain;border-radius:var(--case-media-radius)!important;background:#1b1b1b;clip-path:inset(0 round var(--case-media-radius));box-shadow:0 24px 80px #0008;cursor:default}
 .lightbox-scroll>img{cursor:zoom-in}
 .lightbox-scroll.zoomed{justify-content:flex-start}
 .lightbox-scroll>img.lightbox-zoomed{width:auto;max-width:none;max-height:none;margin:0 auto;cursor:zoom-out}
