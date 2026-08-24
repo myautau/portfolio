@@ -148,9 +148,9 @@ function ReferenceWork() {
 export default function ReferencePage() {
   const mobileQa = new URLSearchParams(window.location.search).has("mobile-qa");
   useEffect(() => {
-    document.title = "Kima - Minimal Portfolio Framer Template";
+    document.title = "Viktoria Matveeva — Product Designer";
     document.documentElement.classList.toggle("reference-mobile-qa", mobileQa);
-    return () => { document.title = "Вика Матвеева — Product Designer"; document.documentElement.classList.remove("reference-mobile-qa"); };
+    return () => { document.title = "Viktoria Matveeva — Product Designer"; document.documentElement.classList.remove("reference-mobile-qa"); };
   }, [mobileQa]);
   return <><RefMobileSwitch /><main className="ref-shell"><ReferenceAbout /><ReferenceWork /></main></>;
 }

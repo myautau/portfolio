@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowUp, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { siClaude } from "simple-icons";
-import ReferencePage from "./ReferencePage";
-import MetricsTrainer from "./MetricsTrainer";
 import { chatgptDarkIcon } from "./toolIconData";
+
+const ReferencePage = lazy(() => import("./ReferencePage"));
+const MetricsTrainer = lazy(() => import("./MetricsTrainer"));
 
 const A = "/assets/";
 const assetUrl = name => `${A}${name.replace(/\.(?:png|jpe?g)$/i, ".webp")}`;
@@ -36,9 +37,42 @@ function TypographedPage({ children }) {
   return <><TypographyFix/>{children}</>;
 }
 
-function Link({ href, children, className = "", ...props }) {
+function Link({ href, children, className = "", onClick, ...props }) {
   const external = /^(https?:|mailto:)/.test(href);
-  return <a href={href} className={className} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined} {...props}>{children}</a>;
+  const navigate = (event) => {
+    onClick?.(event);
+    if (event.defaultPrevented || external || href.startsWith("#") || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    window.history.pushState({}, "", href);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+    window.scrollTo({ top: 0, left: 0 });
+  };
+  return <a href={href} className={className} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined} onClick={navigate} {...props}>{children}</a>;
+}
+
+function LazyVideo({ src, autoPlay = true, ...props }) {
+  const ref = useRef(null);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (!("IntersectionObserver" in window)) { setReady(true); return; }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setReady(true); observer.disconnect(); }
+    }, { rootMargin: "400px" });
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
+    if (!ready || !autoPlay || !ref.current) return;
+    const video = ref.current;
+    const play = () => video.play().catch(() => {});
+    video.muted = true;
+    video.defaultMuted = true;
+    video.load();
+    video.addEventListener("canplay", play, { once: true });
+    play();
+    return () => video.removeEventListener("canplay", play);
+  }, [ready, src, autoPlay]);
+  return <video ref={ref} src={ready ? src : undefined} autoPlay={autoPlay} preload="none" disablePictureInPicture disableRemotePlayback {...props}/>;
 }
 
 function BrandIcon({ icon, variant }) {
@@ -59,7 +93,7 @@ const workLeft = [
 
 const workRight = [
   { title: "Манжерок", kind: "Мобильное приложение", appIcon: "manzherok-app-icon.png", image: "home-ski-hq.png", href: "/ski-resort", ratio: "6 / 5" },
-  { title: "Инвестиции", kind: "Мобильное приложение", image: "investments-poster-hq.jpg", video: "49ffUQIce8WZN2PgRtLeHYRzxHo.mp4", href: "/investments", ratio: "4 / 3" },
+  { title: "Инвестиции", kind: "Мобильное приложение", image: "investments-poster-hq.jpg", video: "investments-hq.mp4", href: "/investments", ratio: "4 / 3" },
   { title: "Avito Fashion", kind: "Концепт", image: "avito-fashion-cover-v2.png", href: "/avito-fashion", ratio: "3 / 4", imageClass: "avito-cover" },
   { title: "Концепт", kind: "Мобильное приложение", image: "concept-poster-hq.jpg", video: "HRukF4ca0a0qfNKqktNqpjFcoL4.mp4", href: "/concept", ratio: "4 / 3" },
   { title: "Туризм", kind: "Концепт приложения", image: "travel-concept-poster.jpg", video: "TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4", href: "/travel-concept", ratio: "4 / 3" },
@@ -130,7 +164,7 @@ const galleryCaptions = {
   "ski-f0077e8e46537e02.avif": "Основные экраны приложения курорта",
   "ski-hand-interface-new.png": "Главный экран приложения",
   "ski-a6951fee0dc0d8da.avif": "Главная, услуги и персональные предложения",
-  "ski-4e5ac801adcc97b3.avif": "Сценарий покупки билета: от выбора до оплаты и получения QR-кода в приложении",
+  "ski-4e5ac801adcc97b3.avif": "Экран информации об отеле",
   "ski-ebd18ef95ae2da98.avif": "Выбор отеля, номера и тарифа",
   "ski-eb839b4dfdf80618.avif": "Оформление бронирования и QR-билет",
   "ski-06-hq.png": "Поиск объектов и построение маршрута",
@@ -163,18 +197,23 @@ const galleryCaptions = {
   "other-portrait-01-hq.png": "Дашборд показателей и сценариев продукта",
 };
 
-function ProjectCard({ project }) {
+const galleryDimensions = {
+  "vmeste-c2e5b4da20d62cee.avif": [3200, 2200],
+  "vmeste-65f1e8d4f0648310.avif": [3200, 2200],
+};
+
+function ProjectCard({ project, priority = false }) {
   return <Link href={project.href} className={`work-card${project.fit === "contain" ? " contain-media" : ""}${project.mockup ? " mockup-card" : ""}`} style={{ aspectRatio: project.ratio }}>
     {project.mockup
-      ? <span className="mockup-cover"><span className="mockup-device"><img src={assetUrl(project.image)} alt="" style={{ objectPosition: project.mockupPosition || "center", "--mockup-scale": project.mockupScale || 1 }}/></span></span>
+      ? <span className="mockup-cover"><span className="mockup-device"><img src={assetUrl(project.image)} alt="" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" style={{ objectPosition: project.mockupPosition || "center", "--mockup-scale": project.mockupScale || 1 }}/></span></span>
       : project.video
-      ? <video src={`/videos/${project.video}`} poster={assetUrl(project.image)} autoPlay muted loop playsInline preload="metadata" style={{ objectPosition: project.position || "center" }} aria-label={`${project.title} — видео-превью`}/>
-      : <img className={project.imageClass || ""} src={assetUrl(project.image)} alt="" style={{ objectPosition: project.position || "center", objectFit: project.fit || "cover" }}/>
+      ? <LazyVideo src={`/videos/${project.video}`} poster={assetUrl(project.image)} autoPlay muted loop playsInline style={{ objectPosition: project.position || "center" }} aria-label={`${project.title} — видео-превью`}/>
+      : <img className={project.imageClass || ""} src={assetUrl(project.image)} alt="" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" style={{ objectPosition: project.position || "center", objectFit: project.fit || "cover" }}/>
     }
     <span className="work-gradient"/>
     <span className="work-meta">
       <b className={project.appIcon ? "work-title-with-icon" : ""}>
-        {project.appIcon && <img className="work-app-icon" src={assetUrl(project.appIcon)} alt="" aria-hidden="true"/>}
+        {project.appIcon && <img className="work-app-icon" src={assetUrl(project.appIcon)} alt="" loading="lazy" decoding="async" aria-hidden="true"/>}
         <span>{project.title}</span>
       </b>
       <small>{project.kind}</small>
@@ -210,7 +249,7 @@ function AboutPane() {
   return <section className="about-pane" id="intro">
     <div className="profile-row"><img src={`${A}cv-portrait.avif`} alt="Вика Матвеева"/><div><h1>Вика Матвеева</h1><p>Продуктовый дизайнер</p></div></div>
     <p className="lead">Создаю мобильные приложения, сайты и B2B-системы — от идеи и исследований до запуска. Соединяю эстетику, функциональность и задачи бизнеса.</p>
-    <p className="availability"><i/>Санкт-Петербург · открыта к проектам</p>
+    <p className="availability"><i/>Открыта к предложениям</p>
     <Link href="https://t.me/myautau" className="light-button">Написать мне</Link>
 
     {showAboutDetails && <InfoSection title="Обо мне">
@@ -222,16 +261,16 @@ function AboutPane() {
       <div className="tool-list">{tools.map(([icon, name, desc, variant])=><div className="tool-row" key={name}><BrandIcon icon={icon} variant={variant}/><div><h3>{name}</h3><p>{desc}</p></div></div>)}</div>
     </InfoSection>
 
+    <InfoSection title="Подход">
+      <div className="principles"><p>Начинаю с задач пользователя и бизнеса, а не с готового визуального решения.</p><p>Проверяю гипотезы исследованиями и прототипами до дорогой реализации.</p><p>Думаю о передаче в разработку и поддерживаю решения понятной документацией.</p><p>Люблю нестандартные идеи, нишевые приложения и эксперименты с нейросетями.</p></div>
+    </InfoSection>
+
     <InfoSection title="Опыт работы">
       <div className="experience-list">{jobs.map(([role, company, date, text], index)=><article key={company}><img className="experience-logo" src={assetUrl(companyLogos[index][0])} alt=""/><div><h3>{role}</h3><p className="job-meta">{company} · {date}</p><p>{text}</p></div></article>)}</div>
     </InfoSection>
 
     <InfoSection title="Образование">
       <div className="education-list"><p><b>Графический дизайн, магистратура</b><span>СПГХПА им. Штиглица</span></p><p><b>Графический дизайн, бакалавриат</b><span>УГАХУ</span></p></div>
-    </InfoSection>
-
-    <InfoSection title="Подход">
-      <div className="principles"><p>Начинаю с задач пользователя и бизнеса, а не с готового визуального решения.</p><p>Проверяю гипотезы исследованиями и прототипами до дорогой реализации.</p><p>Думаю о передаче в разработку и поддерживаю решения понятной документацией.</p><p>Люблю нестандартные идеи, нишевые приложения и эксперименты с нейросетями.</p></div>
     </InfoSection>
 
     <footer className="reach" id="contact"><h2>Контакты</h2><p className="muted">Предлагаю написать и назначить созвон для знакомства.</p><div className="contact-bottom-row"><nav className="contact-fields" aria-label="Контакты"><Link href="https://t.me/myautau">Telegram</Link><Link href="mailto:myautau13@gmail.com">Email</Link><Link href="https://www.linkedin.com/in/viktoriamatveeva">LinkedIn</Link></nav><a className="back-to-top" href="#intro" aria-label="Вернуться наверх" onClick={(event) => { event.preventDefault(); if (window.innerWidth <= 809) window.scrollTo({ top: 0, behavior: "smooth" }); else event.currentTarget.closest(".about-pane")?.scrollTo({ top: 0, behavior: "smooth" }); }}><ArrowUp aria-hidden="true"/></a></div></footer>
@@ -245,14 +284,14 @@ function WorkPane({ hypothesis = false }) {
   const left = hypothesis ? hypothesisLeft : workLeft;
   const right = hypothesis ? hypothesisRight : workRight;
   const mobileOrder = Array.from({ length: Math.max(left.length, right.length) }, (_, index) => [left[index], right[index]]).flat().filter(Boolean);
-  return <section className={`work-pane${hypothesis ? " hypothesis-work" : ""}`} id="work"><div className="work-desktop"><div className="work-column">{left.map(p=><ProjectCard key={p.title} project={p}/>)}</div><div className="work-column">{right.map(p=><ProjectCard key={p.title} project={p}/>)}</div></div><div className="work-mobile-list">{mobileOrder.map(p=><ProjectCard key={p.title} project={p}/>)}</div></section>;
+  return <section className={`work-pane${hypothesis ? " hypothesis-work" : ""}`} id="work"><div className="work-desktop"><div className="work-column">{left.map((p, index)=><ProjectCard key={p.title} project={p} priority={index === 0}/>)}</div><div className="work-column">{right.map((p, index)=><ProjectCard key={p.title} project={p} priority={index === 0}/>)}</div></div><div className="work-mobile-list">{mobileOrder.map((p, index)=><ProjectCard key={p.title} project={p} priority={index === 0}/>)}</div></section>;
 }
 
 function Home({ hypothesis = false }) {
   useEffect(() => {
     if (!hypothesis) return;
     const previousTitle = document.title;
-    document.title = "Проверка гипотезы — Вика Матвеева";
+    document.title = "Viktoria Matveeva — Product Designer";
     return () => { document.title = previousTitle; };
   }, [hypothesis]);
   return <><MobileSwitch/><main className={`portfolio-shell${hypothesis ? " hypothesis-page" : ""}`}><div className="about-wrap"><AboutPane/></div><WorkPane hypothesis={hypothesis}/></main></>;
@@ -311,7 +350,7 @@ const cases = {
     title: "Инвестиции", subtitle: "Концепт мобильного приложения для управления инвестициями", meta: [["Продукт","Мобильное приложение"],["Направление","Fintech"],["Платформа","iOS"]],
     intro: "Концепт для контроля портфеля, динамики и инвестиционных продуктов.",
     sections: [["Задача","Сделать сложные финансовые данные понятными и доступными."],["Структура","Объединить портфель, динамику и операции в одном сценарии."],["Визуальная система","Тёмная тема фокусирует внимание на данных и изменениях."]],
-    gallery: [{ type: "video", src: "/videos/49ffUQIce8WZN2PgRtLeHYRzxHo.mp4" }]
+    gallery: [{ type: "video", src: "/videos/investments-hq.mp4" }]
   },
   "/trinity-monsters": {
     title: "Trinity Monsters", subtitle: "Концепт раздела вакансий в эстетике Windows 98", meta: [["Продукт","Раздел вакансий"],["Направление","HR"],["Платформа","Web"]],
@@ -350,8 +389,8 @@ const cases = {
       "trinity-04-hq.png",
       "flight-concept-hq.png",
       "other-screen-hq.png",
-      "other-portrait-01-hq.png",
-      { type: "video", src: "/videos/TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4" }
+      { type: "video", src: "/videos/TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4" },
+      "other-portrait-01-hq.png"
     ]
   },
   "/step-app": {
@@ -396,8 +435,11 @@ function CasePage({ data }) {
   const mediaEntries = data.gallery;
   const mediaItems = mediaEntries.map(item => typeof item === "object" && item.type === "video" ? item.src : assetUrl(item));
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [zoomPoint, setZoomPoint] = useState({ x: 0.5, y: 0.5 });
   useEffect(() => {
     if (lightboxIndex === null) return;
+    setIsZoomed(false);
     document.querySelector(".lightbox-scroll")?.scrollTo({ top: 0, left: 0 });
     const previousOverflow = document.body.style.overflow;
     const navigateLightbox = (event) => {
@@ -412,15 +454,51 @@ function CasePage({ data }) {
       window.removeEventListener("keydown", navigateLightbox);
     };
   }, [lightboxIndex, mediaItems.length]);
+  useEffect(() => {
+    if (lightboxIndex === null || mediaEntries.length < 2) return;
+    const adjacent = [
+      mediaEntries[(lightboxIndex - 1 + mediaEntries.length) % mediaEntries.length],
+      mediaEntries[(lightboxIndex + 1) % mediaEntries.length],
+    ];
+    adjacent.forEach(item => {
+      if (typeof item === "object") return;
+      const image = new Image();
+      image.src = assetUrl(item);
+      image.decode?.().catch(() => {});
+    });
+  }, [lightboxIndex, mediaEntries]);
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    const frame = window.requestAnimationFrame(() => {
+      const scroller = document.querySelector(".lightbox-scroll");
+      if (!scroller) return;
+      scroller.scrollTo({
+        left: isZoomed ? zoomPoint.x * scroller.scrollWidth - scroller.clientWidth / 2 : 0,
+        top: isZoomed ? zoomPoint.y * scroller.scrollHeight - scroller.clientHeight / 2 : 0,
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [isZoomed, zoomPoint, lightboxIndex]);
+
+  const toggleImageZoom = (event) => {
+    if (!isZoomed) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      setZoomPoint({
+        x: event.clientX ? (event.clientX - rect.left) / rect.width : 0.5,
+        y: event.clientY ? (event.clientY - rect.top) / rect.height : 0.5,
+      });
+    }
+    setIsZoomed(value => !value);
+  };
 
   const renderImage = (item, i) => {
     const isVideo = typeof item === "object" && item.type === "video";
     const src = isVideo ? item.src : assetUrl(item);
     const caption = isVideo ? item.caption || `${data.title} — видео проекта` : galleryCaptions[item] || `${data.title} — экран проекта`;
     const isVmesteStories = item === "other-ba1a805d27423031.webp";
-    return <figure key={src} className={isVmesteStories ? "vmeste-stories-card" : undefined}><button className="gallery-image-button" type="button" onClick={() => setLightboxIndex(mediaItems.indexOf(src))} aria-label={`${caption}. Открыть на весь экран`}>{isVideo
-      ? <video src={src} autoPlay muted loop playsInline preload="metadata"/>
-      : <img src={src} alt="" loading={i > 2 ? "lazy" : undefined}/>
+    return <figure key={src} className={isVmesteStories ? "vmeste-stories-card" : undefined}><button className={`gallery-image-button${isVideo ? " is-video" : ""}`} type="button" onClick={() => setLightboxIndex(mediaItems.indexOf(src))} aria-label={`${caption}. Открыть на весь экран`}>{isVideo
+      ? <LazyVideo src={src} autoPlay muted loop playsInline/>
+      : <img src={src} alt="" loading={mediaEntries.indexOf(item) > 1 ? "lazy" : "eager"} fetchPriority={mediaEntries.indexOf(item) === 0 ? "high" : "auto"} decoding="async"/>
     }<span>{caption}</span></button></figure>;
   };
   const leftGallery = data.gallery.filter((_, i) => i % 2 === 0);
@@ -429,7 +507,8 @@ function CasePage({ data }) {
   const lightboxEntry = lightboxIndex === null ? null : mediaEntries[lightboxIndex];
   const lightboxIsVideo = Boolean(lightboxEntry && typeof lightboxEntry === "object" && lightboxEntry.type === "video");
   const lightboxCaption = lightboxIsVideo ? lightboxEntry.caption || `${data.title} — видео проекта` : galleryCaptions[lightboxEntry] || `${data.title} — экран проекта`;
-  return <><MobileSwitch mode="project"/><main className="case-shell"><section className="case-info" id="project-info"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><header className={hasProjectCta ? "has-cta" : "no-cta"}><h1>{data.title}</h1><p>{data.subtitle}</p>{hasProjectCta && <Link href="https://t.me/myautau" className="light-button case-cta">Обсудить проект</Link>}</header><div className="case-meta">{data.meta.filter(([k]) => k !== "Продукт").map(([k,v])=><p key={k}><span>{k}</span><b>{v}</b></p>)}</div><p className="case-intro">{data.intro}</p>{data.sections.map(([title,text])=><article className="case-text" key={title} id={title.toLowerCase().replaceAll(" ","-")}><h2>{title}</h2><p>{text}</p></article>)}<Link href="/" className="text-link">Все проекты <ArrowUpRight size={16}/></Link></section><section className={`case-gallery${data.gallery.length === 1 ? " single-media" : ""}${data.galleryLayout === "stack" ? " stack-media" : ""}`} id="gallery"><div className="gallery-desktop"><div>{leftGallery.map(renderImage)}</div><div>{rightGallery.map(renderImage)}</div></div><div className="gallery-mobile">{data.gallery.map(renderImage)}</div></section></main>{lightboxIndex !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Просмотр материалов проекта"><div className="lightbox-scroll" onClick={(event) => event.target === event.currentTarget && setLightboxIndex(null)}>{lightboxIsVideo ? <video key={mediaItems[lightboxIndex]} src={mediaItems[lightboxIndex]} autoPlay muted loop playsInline controls/> : <img className={lightboxEntry === "other-ba1a805d27423031.webp" ? "lightbox-stories" : undefined} src={mediaItems[lightboxIndex]} alt="" onLoad={(event) => event.currentTarget.classList.toggle("lightbox-tall", event.currentTarget.naturalHeight > event.currentTarget.naturalWidth)}/>}</div><span className="lightbox-caption">{lightboxCaption}</span><button className="lightbox-close" type="button" onClick={() => setLightboxIndex(null)}>Закрыть</button>{mediaItems.length > 1 && <><button className="lightbox-arrow lightbox-prev" type="button" onClick={() => setLightboxIndex(index => (index - 1 + mediaItems.length) % mediaItems.length)} aria-label="Предыдущий материал"><ChevronLeft aria-hidden="true"/></button><button className="lightbox-arrow lightbox-next" type="button" onClick={() => setLightboxIndex(index => (index + 1) % mediaItems.length)} aria-label="Следующий материал"><ChevronRight aria-hidden="true"/></button><span className="lightbox-count">{lightboxIndex + 1} / {mediaItems.length}</span></>}</div>}</>;
+  const lightboxDimensions = galleryDimensions[lightboxEntry];
+  return <><MobileSwitch mode="project"/><main className="case-shell"><section className="case-info" id="project-info"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><header className={hasProjectCta ? "has-cta" : "no-cta"}><h1>{data.title}</h1><p>{data.subtitle}</p>{hasProjectCta && <Link href="https://t.me/myautau" className="light-button case-cta">Обсудить проект</Link>}</header><div className="case-meta">{data.meta.filter(([k]) => k !== "Продукт").map(([k,v])=><p key={k}><span>{k}</span><b>{v}</b></p>)}</div><p className="case-intro">{data.intro}</p>{data.sections.map(([title,text])=><article className="case-text" key={title} id={title.toLowerCase().replaceAll(" ","-")}><h2>{title}</h2><p>{text}</p></article>)}<Link href="/" className="text-link">Все проекты <ArrowUpRight size={16}/></Link></section><section className={`case-gallery${data.gallery.length === 1 ? " single-media" : ""}${data.galleryLayout === "stack" ? " stack-media" : ""}`} id="gallery"><div className="gallery-desktop"><div>{leftGallery.map(renderImage)}</div><div>{rightGallery.map(renderImage)}</div></div><div className="gallery-mobile">{data.gallery.map(renderImage)}</div></section></main>{lightboxIndex !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Просмотр материалов проекта"><div className={`lightbox-scroll${isZoomed ? " zoomed" : ""}`} onClick={(event) => event.target === event.currentTarget && setLightboxIndex(null)}>{lightboxIsVideo ? <video key={mediaItems[lightboxIndex]} src={mediaItems[lightboxIndex]} autoPlay muted loop playsInline disablePictureInPicture disableRemotePlayback/> : <img className={`${lightboxEntry === "other-ba1a805d27423031.webp" ? "lightbox-stories " : ""}${isZoomed ? "lightbox-zoomed" : ""}`} src={mediaItems[lightboxIndex]} width={lightboxDimensions?.[0]} height={lightboxDimensions?.[1]} alt="" role="button" tabIndex={0} aria-label={isZoomed ? "Уменьшить изображение" : "Увеличить изображение"} onClick={toggleImageZoom} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggleImageZoom(event); } }} onLoad={(event) => event.currentTarget.classList.toggle("lightbox-tall", event.currentTarget.naturalHeight > event.currentTarget.naturalWidth)}/>}</div><span className="lightbox-caption">{lightboxCaption}</span><button className="lightbox-close" type="button" onClick={() => setLightboxIndex(null)}>Закрыть</button>{mediaItems.length > 1 && <><button className="lightbox-arrow lightbox-prev" type="button" onClick={() => setLightboxIndex(index => (index - 1 + mediaItems.length) % mediaItems.length)} aria-label="Предыдущий материал"><ChevronLeft aria-hidden="true"/></button><button className="lightbox-arrow lightbox-next" type="button" onClick={() => setLightboxIndex(index => (index + 1) % mediaItems.length)} aria-label="Следующий материал"><ChevronRight aria-hidden="true"/></button><span className="lightbox-count">{lightboxIndex + 1} / {mediaItems.length}</span></>}</div>}</>;
 }
 
 function ResumePage() {
@@ -439,13 +518,19 @@ function ResumePage() {
 function ContactPage() { return <main className="contact-shell"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><div><h1>Связаться.</h1><p>Предлагаю написать и назначить созвон для знакомства.</p><Link href="mailto:myautau13@gmail.com">myautau13@gmail.com</Link><Link href="https://t.me/myautau">Telegram: @myautau</Link></div></main>; }
 
 export function App() {
-  const route = window.location.pathname.replace(/\/$/, "") || "/";
-  if (route === "/" || route === "/metrics") return <MetricsTrainer/>;
-  if (route === "/reference") return <ReferencePage/>;
-  if (route === "/hypothesis-test") return <TypographedPage><Home hypothesis/></TypographedPage>;
-  if (cases[route]) return <TypographedPage><CasePage data={cases[route]}/></TypographedPage>;
-  if (route === "/cv") return <TypographedPage><ResumePage/></TypographedPage>;
-  if (route === "/contact") return <TypographedPage><ContactPage/></TypographedPage>;
-  if (route === "/copy" || route === "/portfolio") return <TypographedPage><Home hypothesis/></TypographedPage>;
-  return <TypographedPage><Home hypothesis/></TypographedPage>;
+  const [route, setRoute] = useState(() => window.location.pathname.replace(/\/$/, "") || "/");
+  useEffect(() => {
+    const syncRoute = () => setRoute(window.location.pathname.replace(/\/$/, "") || "/");
+    window.addEventListener("popstate", syncRoute);
+    return () => window.removeEventListener("popstate", syncRoute);
+  }, []);
+  if (route === "/metrics") return <Suspense fallback={null}><MetricsTrainer/></Suspense>;
+  if (route === "/") return <TypographedPage key={route}><Home hypothesis/></TypographedPage>;
+  if (route === "/reference") return <Suspense fallback={null}><ReferencePage/></Suspense>;
+  if (route === "/hypothesis-test") return <TypographedPage key={route}><Home hypothesis/></TypographedPage>;
+  if (cases[route]) return <TypographedPage key={route}><CasePage data={cases[route]}/></TypographedPage>;
+  if (route === "/cv") return <TypographedPage key={route}><ResumePage/></TypographedPage>;
+  if (route === "/contact") return <TypographedPage key={route}><ContactPage/></TypographedPage>;
+  if (route === "/copy" || route === "/portfolio") return <TypographedPage key={route}><Home hypothesis/></TypographedPage>;
+  return <TypographedPage key={route}><Home hypothesis/></TypographedPage>;
 }
