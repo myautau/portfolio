@@ -232,6 +232,7 @@ const galleryBackgrounds = {
   "flight-concept-hq.png": "#fff",
   "other-screen-hq.png": "#000",
   "other-portrait-01-hq.png": "#000",
+  "other-portrait-02-hq.png": "#fef6f2",
 };
 
 function ProjectCard({ project, priority = false }) {
