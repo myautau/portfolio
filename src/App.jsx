@@ -224,7 +224,7 @@ function ProjectCard({ project, priority = false }) {
     <span className="work-gradient"/>
     <span className="work-meta">
       <b className={project.appIcon ? "work-title-with-icon" : ""}>
-        {project.appIcon && <img className="work-app-icon" src={assetUrl(project.appIcon)} alt="" loading="lazy" decoding="async" aria-hidden="true"/>}
+        {project.appIcon && <img className={`work-app-icon${project.appIcon === "ama-app-icon.png" ? " work-app-icon-ama" : ""}`} src={assetUrl(project.appIcon)} alt="" loading="lazy" decoding="async" aria-hidden="true"/>}
         <span>{project.title}</span>
       </b>
       <small>{project.kind}</small>
@@ -280,10 +280,6 @@ function AboutPane() {
       <div className="experience-list">{jobs.map(([role, company, date, text], index)=><article key={company}><img className="experience-logo" src={assetUrl(companyLogos[index][0])} alt=""/><div><h3>{role}</h3><p className="job-meta">{company} · {date}</p><p>{text}</p></div></article>)}</div>
     </InfoSection>
 
-    <InfoSection title="Образование">
-      <div className="education-list"><p><b>Графический дизайн, магистратура</b><span>СПГХПА им. Штиглица</span></p><p><b>Графический дизайн, бакалавриат</b><span>УГАХУ</span></p></div>
-    </InfoSection>
-
     <footer className="reach" id="contact"><h2>Контакты</h2><p className="muted">Предлагаю написать и назначить созвон для знакомства.</p><div className="contact-bottom-row"><nav className="contact-fields" aria-label="Контакты"><Link href="https://t.me/myautau">Telegram</Link><Link href="mailto:myautau13@gmail.com">Email</Link><Link href="https://www.linkedin.com/in/viktoriamatveeva">LinkedIn</Link></nav><a className="back-to-top" href="#intro" aria-label="Вернуться наверх" onClick={(event) => { event.preventDefault(); if (window.innerWidth <= 809) window.scrollTo({ top: 0, behavior: "smooth" }); else event.currentTarget.closest(".about-pane")?.scrollTo({ top: 0, behavior: "smooth" }); }}><ArrowUp aria-hidden="true"/></a></div></footer>
   </section>;
 }
@@ -312,7 +308,7 @@ const cases = {
   "/ama": {
     title: "AMA", subtitle: "Переосмысление консьерж-сервиса для клиентов private banking", meta: [["Продукт","Мобильное приложение"],["Направление","Консьерж-сервис"],["Платформа","iOS, Android"]],
     intro: "Премиальный консьерж-сервис ВТБ для путешествий, ресторанов, привилегий и персональных запросов.",
-    sections: [["Задача","Дать клиенту выбор: решить вопрос самостоятельно, обратиться к менеджеру или получить готовое предложение."],["Аудитория","Учесть скорость для new money, деликатный сервис для old money и самостоятельность для self-made."],["Стратегия","Объединила чат, закрытые предложения, календарь, уведомления и семейные профили."],["Визуальная концепция","Синие градиенты, металл и мягкое свечение создают технологичный премиальный образ."],["Чат и артефакты","Запросы превращаются в понятные карточки, билеты и виджеты со статусами."],["Умная лента","Лента учитывает геолокацию и события, а бронирования попадают в планы."],["Коллекции","Места и идеи можно сохранить в подборку и отправить консьержу."],["CRM","В CRM собраны задачи, статусы, предложения, контекст клиента и SLA."],["Результат","Концепция получила инвестиции и перешла к реализации."]],
+    sections: [["О задаче","Дать клиенту выбор: решить вопрос самостоятельно, обратиться к менеджеру или получить готовое предложение."],["Аудитория","Учесть скорость для new money, деликатный сервис для old money и самостоятельность для self-made."],["Стратегия","Объединила чат, закрытые предложения, календарь, уведомления и семейные профили."],["Визуальная концепция","Синие градиенты, металл и мягкое свечение создают технологичный премиальный образ."],["Чат и артефакты","Запросы превращаются в понятные карточки, билеты и виджеты со статусами."],["Умная лента","Лента учитывает геолокацию и события, а бронирования попадают в планы."],["Коллекции","Места и идеи можно сохранить в подборку и отправить консьержу."],["CRM","В CRM собраны задачи, статусы, предложения, контекст клиента и SLA."],["Результат","Концепция получила инвестиции и перешла к реализации."]],
     gallery: ["ama/ama-11.jpg","ama/ama-12.jpg","ama/ama-14.jpg","ama/ama-15.jpg","ama/ama-17.jpg","ama/ama-18.jpg","ama/ama-04.jpg","ama/ama-05.jpg","ama/ama-06.jpg","ama/ama-07.jpg","ama/ama-08.jpg","ama/ama-03.jpg"]
   },
   "/ski-resort": {
@@ -360,7 +356,8 @@ const cases = {
   "/investments": {
     title: "Инвестиции", subtitle: "Концепт мобильного приложения для управления инвестициями", meta: [["Продукт","Мобильное приложение"],["Направление","Fintech"],["Платформа","iOS"]],
     intro: "Концепт для контроля портфеля, динамики и инвестиционных продуктов.",
-    sections: [["Задача","Сделать сложные финансовые данные понятными и доступными."],["Структура","Объединить портфель, динамику и операции в одном сценарии."],["Визуальная система","Тёмная тема фокусирует внимание на данных и изменениях."]],
+    hideSections: ["О задаче"],
+    sections: [["О задаче","Сделать сложные финансовые данные понятными и доступными."],["Структура","Объединить портфель, динамику и операции в одном сценарии."],["Визуальная система","Тёмная тема фокусирует внимание на данных и изменениях."]],
     gallery: [{ type: "video", src: `${V}investments-hq.mp4` }]
   },
   "/trinity-monsters": {
@@ -372,17 +369,17 @@ const cases = {
   "/avito-fashion": {
     title: "Avito Fashion", subtitle: "Концепция fashion-вертикали внутри Avito", meta: [["Продукт","Раздел маркетплейса"],["Направление","Fashion, e-commerce"],["Платформа","iOS, Android"]],
     intro: "Концепция раздела для выгодных покупок одежды, обуви, аксессуаров и винтажа.",
-    sections: [["Задача","Сделать поиск модных товаров более вдохновляющим и сохранить привычную логику маркетплейса."],["Каталог","Категории, подборки и фильтры помогают быстрее перейти от просмотра образов к конкретному товару."],["Карточка товара","Информация о вещи, продавце и вариантах покупки собрана в одном последовательном сценарии."]],
+    sections: [["О задаче","Сделать поиск модных товаров более вдохновляющим и сохранить привычную логику маркетплейса."],["Каталог","Категории, подборки и фильтры помогают быстрее перейти от просмотра образов к конкретному товару."],["Карточка товара","Информация о вещи, продавце и вариантах покупки собрана в одном последовательном сценарии."]],
     galleryLayout: "stack",
     gallery: ["avito-fashion-block-01-dark.png","avito-fashion-block-02-dark.png"]
   },
   "/concept": {
     title: "Концепт", subtitle: "Концепция мобильного приложения", meta: [["Продукт","Мобильное приложение"],["Направление","E-commerce"],["Платформа","iOS, Android"]],
     intro: "Мобильный e-commerce-концепт с каталогом, подборками и быстрыми сценариями.",
-    sections: [["Задача","Собрать насыщенный контент в понятную структуру и сохранить выразительную визуальную подачу."],["Интерфейс","Карточки, подборки и навигация объединены в компактную мобильную систему."],["Визуальная система","Тёмная основа и цветовые акценты помогают разделять контент и выделять ключевые действия."]],
+    sections: [["О задаче","Собрать насыщенный контент в понятную структуру и сохранить выразительную визуальную подачу."],["Интерфейс","Карточки, подборки и навигация объединены в компактную мобильную систему."],["Визуальная система","Тёмная основа и цветовые акценты помогают разделять контент и выделять ключевые действия."]],
     gallery: [
-      { type: "video", src: `${V}HRukF4ca0a0qfNKqktNqpjFcoL4.mp4` },
-      { type: "video", src: `${V}TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4` }
+      { type: "video", src: `${V}HRukF4ca0a0qfNKqktNqpjFcoL4.mp4`, caption: "Концепт мобильного приложения" },
+      { type: "video", src: `${V}TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4`, caption: "Концепт мобильного приложения" }
     ]
   },
   "/other-projects": {
@@ -390,7 +387,7 @@ const cases = {
     intro: "Подборка мобильных и веб-концептов.",
     sections: [],
     gallery: [
-      { type: "video", src: `${V}HRukF4ca0a0qfNKqktNqpjFcoL4.mp4` },
+      { type: "video", src: `${V}HRukF4ca0a0qfNKqktNqpjFcoL4.mp4`, caption: "Концепт мобильного приложения" },
       "step-app-01-hq.png",
       "step-app-02-hq.png",
       "stoloto-hq.png",
@@ -400,7 +397,7 @@ const cases = {
       "trinity-04-hq.png",
       "flight-concept-hq.png",
       "other-screen-hq.png",
-      { type: "video", src: `${V}TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4` },
+      { type: "video", src: `${V}TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4`, caption: "Концепт мобильного приложения" },
       "other-portrait-01-hq.png"
     ]
   },
@@ -413,7 +410,7 @@ const cases = {
   "/stoloto": {
     title: "Столото", subtitle: "Сервис массовой проверки лотерейных билетов", meta: [["Продукт","Сервис внутри приложения"],["Направление","Лотереи"],["Платформа","iOS, Android"]],
     intro: "Сервис помогает проверить несколько билетов разных лотерей через QR-сканирование или ручной ввод.",
-    sections: [["Задача","Сократить путь от набора билетов до понятного результата проверки."],["Сканирование","Пользователь добавляет билеты по QR-коду и видит их в общей подборке."],["Результат","Статусы и сумма выигрыша представлены так, чтобы быстро оценить итог по всем билетам."]],
+    sections: [["О задаче","Сократить путь от набора билетов до понятного результата проверки."],["Сканирование","Пользователь добавляет билеты по QR-коду и видит их в общей подборке."],["Результат","Статусы и сумма выигрыша представлены так, чтобы быстро оценить итог по всем билетам."]],
     gallery: ["stoloto-hq.png"]
   },
   "/travel-concept": {
@@ -425,13 +422,13 @@ const cases = {
   "/flight-tracker": {
     title: "Авиарейсы", subtitle: "Концепт приложения для отслеживания перелётов", meta: [["Продукт","Мобильное приложение"],["Направление","Travel"],["Платформа","iOS"]],
     intro: "Концепт для отслеживания рейсов на карте.",
-    sections: [["Задача","Объединить карту, маршрут и список рейсов."],["Интерфейс","Статус, время и детали рейса доступны на одном экране."],["Темы","Проверить читаемость в светлой, синей и тёмной темах."]],
+    sections: [["О задаче","Объединить карту, маршрут и список рейсов."],["Интерфейс","Статус, время и детали рейса доступны на одном экране."],["Темы","Проверить читаемость в светлой, синей и тёмной темах."]],
     gallery: ["flight-concept-hq.png"]
   },
   "/web3-education": {
     title: "Web3 Education", subtitle: "Концепция образовательной платформы про NFT и Web3", meta: [["Продукт","Образовательная платформа"],["Направление","Web3, education"],["Платформа","Web"]],
     intro: "Образовательная платформа о NFT и Web3.",
-    sections: [["Задача","Сделать Web3 понятнее и объединить обучение, навигацию и прогресс."],["Структура","Выстроить материалы от базовых тем к сложным."],["Визуальный язык","Тёмная основа и зелёные акценты поддерживают технологичный характер."]],
+    sections: [["О задаче","Сделать Web3 понятнее и объединить обучение, навигацию и прогресс."],["Структура","Выстроить материалы от базовых тем к сложным."],["Визуальный язык","Тёмная основа и зелёные акценты поддерживают технологичный характер."]],
     gallery: ["other-screen-hq.png","other-portrait-01-hq.png"]
   },
   "/other": {
@@ -519,11 +516,11 @@ function CasePage({ data }) {
   const lightboxIsVideo = Boolean(lightboxEntry && typeof lightboxEntry === "object" && lightboxEntry.type === "video");
   const lightboxCaption = lightboxIsVideo ? lightboxEntry.caption || `${data.title} — видео проекта` : galleryCaptions[lightboxEntry] || `${data.title} — экран проекта`;
   const lightboxDimensions = galleryDimensions[lightboxEntry];
-  return <><MobileSwitch mode="project"/><main className="case-shell"><section className="case-info" id="project-info"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><header className={hasProjectCta ? "has-cta" : "no-cta"}><h1>{data.title}</h1><p>{data.subtitle}</p>{hasProjectCta && <Link href="https://t.me/myautau" className="light-button case-cta">Обсудить проект</Link>}</header><div className="case-meta">{data.meta.filter(([k]) => k !== "Продукт").map(([k,v])=><p key={k}><span>{k}</span><b>{v}</b></p>)}</div><p className="case-intro">{data.intro}</p>{data.sections.map(([title,text])=><article className="case-text" key={title} id={title.toLowerCase().replaceAll(" ","-")}><h2>{title}</h2><p>{text}</p></article>)}<Link href="/" className="text-link">Все проекты <ArrowUpRight size={16}/></Link></section><section className={`case-gallery${data.gallery.length === 1 ? " single-media" : ""}${data.galleryLayout === "stack" ? " stack-media" : ""}`} id="gallery"><div className="gallery-desktop"><div>{leftGallery.map(renderImage)}</div><div>{rightGallery.map(renderImage)}</div></div><div className="gallery-mobile">{data.gallery.map(renderImage)}</div></section></main>{lightboxIndex !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Просмотр материалов проекта"><div className={`lightbox-scroll${isZoomed ? " zoomed" : ""}`} onClick={(event) => event.target === event.currentTarget && setLightboxIndex(null)}>{lightboxIsVideo ? <video key={mediaItems[lightboxIndex]} src={mediaItems[lightboxIndex]} autoPlay muted loop playsInline disablePictureInPicture disableRemotePlayback/> : <img className={`${lightboxEntry === "other-ba1a805d27423031.webp" ? "lightbox-stories " : ""}${isZoomed ? "lightbox-zoomed" : ""}`} src={mediaItems[lightboxIndex]} width={lightboxDimensions?.[0]} height={lightboxDimensions?.[1]} alt="" role="button" tabIndex={0} aria-label={isZoomed ? "Уменьшить изображение" : "Увеличить изображение"} onClick={toggleImageZoom} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggleImageZoom(event); } }} onLoad={(event) => event.currentTarget.classList.toggle("lightbox-tall", event.currentTarget.naturalHeight > event.currentTarget.naturalWidth)}/>}</div><span className="lightbox-caption">{lightboxCaption}</span><button className="lightbox-close" type="button" onClick={() => setLightboxIndex(null)}>Закрыть</button>{mediaItems.length > 1 && <><button className="lightbox-arrow lightbox-prev" type="button" onClick={() => setLightboxIndex(index => (index - 1 + mediaItems.length) % mediaItems.length)} aria-label="Предыдущий материал"><ChevronLeft aria-hidden="true"/></button><button className="lightbox-arrow lightbox-next" type="button" onClick={() => setLightboxIndex(index => (index + 1) % mediaItems.length)} aria-label="Следующий материал"><ChevronRight aria-hidden="true"/></button><span className="lightbox-count">{lightboxIndex + 1} / {mediaItems.length}</span></>}</div>}</>;
+  return <><MobileSwitch mode="project"/><main className="case-shell"><section className="case-info" id="project-info"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><header className={hasProjectCta ? "has-cta" : "no-cta"}><h1>{data.title}</h1><p>{data.subtitle}</p>{hasProjectCta && <Link href="https://t.me/myautau" className="light-button case-cta">Обсудить проект</Link>}</header><div className="case-meta">{data.meta.filter(([k]) => k !== "Продукт").map(([k,v])=><p key={k}><span>{k}</span><b>{v}</b></p>)}</div><p className="case-intro">{data.intro}</p>{data.sections.filter(([title]) => !(data.hideSections || []).includes(title)).map(([title,text])=><article className="case-text" key={title} id={title.toLowerCase().replaceAll(" ","-")}><h2>{title}</h2><p>{text}</p></article>)}<Link href="/" className="text-link">Все проекты <ArrowUpRight size={16}/></Link></section><section className={`case-gallery${data.gallery.length === 1 ? " single-media" : ""}${data.galleryLayout === "stack" ? " stack-media" : ""}`} id="gallery"><div className="gallery-desktop"><div>{leftGallery.map(renderImage)}</div><div>{rightGallery.map(renderImage)}</div></div><div className="gallery-mobile">{data.gallery.map(renderImage)}</div></section></main>{lightboxIndex !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Просмотр материалов проекта"><div className={`lightbox-scroll${isZoomed ? " zoomed" : ""}`} onClick={(event) => event.target === event.currentTarget && setLightboxIndex(null)}>{lightboxIsVideo ? <video key={mediaItems[lightboxIndex]} src={mediaItems[lightboxIndex]} autoPlay muted loop playsInline disablePictureInPicture disableRemotePlayback/> : <img className={`${lightboxEntry === "other-ba1a805d27423031.webp" ? "lightbox-stories " : ""}${isZoomed ? "lightbox-zoomed" : ""}`} src={mediaItems[lightboxIndex]} width={lightboxDimensions?.[0]} height={lightboxDimensions?.[1]} alt="" role="button" tabIndex={0} aria-label={isZoomed ? "Уменьшить изображение" : "Увеличить изображение"} onClick={toggleImageZoom} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggleImageZoom(event); } }} onLoad={(event) => event.currentTarget.classList.toggle("lightbox-tall", event.currentTarget.naturalHeight > event.currentTarget.naturalWidth)}/>}</div><span className="lightbox-caption">{lightboxCaption}</span><button className="lightbox-close" type="button" onClick={() => setLightboxIndex(null)}>Закрыть</button>{mediaItems.length > 1 && <><button className="lightbox-arrow lightbox-prev" type="button" onClick={() => setLightboxIndex(index => (index - 1 + mediaItems.length) % mediaItems.length)} aria-label="Предыдущий материал"><ChevronLeft aria-hidden="true"/></button><button className="lightbox-arrow lightbox-next" type="button" onClick={() => setLightboxIndex(index => (index + 1) % mediaItems.length)} aria-label="Следующий материал"><ChevronRight aria-hidden="true"/></button><span className="lightbox-count">{lightboxIndex + 1} / {mediaItems.length}</span></>}</div>}</>;
 }
 
 function ResumePage() {
-  return <main className="resume-shell"><aside className="resume-summary"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><img className="resume-photo" src={`${A}cv-portrait.avif`} alt="Вика Матвеева"/><h1>Вика Матвеева</h1><p className="muted">Продуктовый дизайнер из Санкт-Петербурга с опытом более пяти лет.</p><Link href="mailto:myautau13@gmail.com" className="light-button">Связаться</Link></aside><section className="resume-content"><h2>Опыт работы.</h2>{jobs.map(([role,company,date,text],i)=><article className="resume-job" key={company}><img src={assetUrl(companyLogos[i][0])} alt=""/><div><h3>{company}</h3><p>{role} · {date}</p><span>{text}</span></div></article>)}<h2>Инструменты.</h2><div className="resume-tools">Figma · ChatGPT · Codex · Claude · Framer</div><h2>Образование.</h2><p className="resume-education">Магистратура — СПГХПА им. Штиглица<br/>Бакалавриат — Уральская государственная архитектурно-художественная академия</p></section></main>;
+  return <main className="resume-shell"><aside className="resume-summary"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><img className="resume-photo" src={`${A}cv-portrait.avif`} alt="Вика Матвеева"/><h1>Вика Матвеева</h1><p className="muted">Продуктовый дизайнер из Санкт-Петербурга с опытом более пяти лет.</p><Link href="mailto:myautau13@gmail.com" className="light-button">Связаться</Link></aside><section className="resume-content"><h2>Опыт работы.</h2>{jobs.map(([role,company,date,text],i)=><article className="resume-job" key={company}><img src={assetUrl(companyLogos[i][0])} alt=""/><div><h3>{company}</h3><p>{role} · {date}</p><span>{text}</span></div></article>)}<h2>Инструменты.</h2><div className="resume-tools">Figma · ChatGPT · Codex · Claude · Framer</div></section></main>;
 }
 
 function ContactPage() { return <main className="contact-shell"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><div><h1>Связаться.</h1><p>Предлагаю написать и назначить созвон для знакомства.</p><Link href="mailto:myautau13@gmail.com">myautau13@gmail.com</Link><Link href="https://t.me/myautau">Telegram: @myautau</Link></div></main>; }
@@ -535,6 +532,14 @@ export function App() {
     window.addEventListener("popstate", syncRoute);
     return () => window.removeEventListener("popstate", syncRoute);
   }, []);
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    const frame = window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+    return () => window.cancelAnimationFrame(frame);
+  }, [route]);
   if (route === "/metrics") return <Suspense fallback={null}><MetricsTrainer/></Suspense>;
   if (route === "/") return <TypographedPage key={route}><Home hypothesis/></TypographedPage>;
   if (route === "/reference") return <Suspense fallback={null}><ReferencePage/></Suspense>;
