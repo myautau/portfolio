@@ -503,8 +503,7 @@ function CasePage({ data }) {
     const isVideo = typeof item === "object" && item.type === "video";
     const src = isVideo ? item.src : assetUrl(item);
     const caption = isVideo ? item.caption || `${data.title} — видео проекта` : galleryCaptions[item] || `${data.title} — экран проекта`;
-    const isVmesteStories = item === "other-ba1a805d27423031.webp";
-    return <figure key={src} className={isVmesteStories ? "vmeste-stories-card" : undefined}><button className={`gallery-image-button${isVideo ? " is-video" : ""}`} type="button" onClick={() => setLightboxIndex(mediaItems.indexOf(src))} aria-label={`${caption}. Открыть на весь экран`}>{isVideo
+    return <figure key={src}><button className={`gallery-image-button${isVideo ? " is-video" : ""}`} type="button" onClick={() => setLightboxIndex(mediaItems.indexOf(src))} aria-label={`${caption}. Открыть на весь экран`}>{isVideo
       ? <LazyVideo src={src} autoPlay muted loop playsInline/>
       : <img src={src} alt="" loading={mediaEntries.indexOf(item) > 1 ? "lazy" : "eager"} fetchPriority={mediaEntries.indexOf(item) === 0 ? "high" : "auto"} decoding="async"/>
     }<span>{caption}</span></button></figure>;
