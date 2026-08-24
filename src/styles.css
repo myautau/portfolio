@@ -124,7 +124,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 .stack-media .gallery-desktop{grid-template-columns:1fr}
 .case-gallery figure{margin:0;border-radius:var(--case-media-radius);overflow:hidden;background:#1b1b1b}
 .case-gallery img,.case-gallery video{display:block;width:100%;height:auto;border-radius:var(--case-media-radius)}
-.uniform-media-gallery figure{border-radius:var(--case-media-radius);overflow:hidden}
+.uniform-media-gallery figure,.uniform-media-gallery .gallery-image-button{border-radius:var(--case-media-radius);overflow:hidden;clip-path:inset(0 round var(--case-media-radius));-webkit-clip-path:inset(0 round var(--case-media-radius))}
 .uniform-media-gallery figure img,.uniform-media-gallery figure video{border-radius:0}
 .vmeste-gallery figure{background:#f6e3dd}
 .vmeste-gallery figure,.vmeste-gallery img,.vmeste-gallery video{border-radius:var(--case-media-radius)}
