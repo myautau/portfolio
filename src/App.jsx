@@ -514,7 +514,7 @@ function CasePage({ data }) {
   };
   const leftGallery = data.gallery.filter((_, i) => i % 2 === 0);
   const rightGallery = data.gallery.filter((_, i) => i % 2 === 1);
-  const hasProjectCta = data.title === "AMA";
+  const hasProjectCta = false;
   const lightboxEntry = lightboxIndex === null ? null : mediaEntries[lightboxIndex];
   const lightboxIsVideo = Boolean(lightboxEntry && typeof lightboxEntry === "object" && lightboxEntry.type === "video");
   const lightboxCaption = lightboxIsVideo ? lightboxEntry.caption || `${data.title} — видео проекта` : galleryCaptions[lightboxEntry] || `${data.title} — экран проекта`;
