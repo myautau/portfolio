@@ -146,7 +146,7 @@ const workRight = [
 
 const hypothesisMockups = {
   "/ama": { image: "ama-widgets-screen.png", mockupPosition: "50% 50%", mockupScale: 1 },
-  "/vmeste": { image: "vmeste-main-screen.png", mockupPosition: "50% 50%", mockupScale: 1 },
+  "/vmeste": { image: "source/vmeste-main-screen-source.png", mockupPosition: "50% 50%", mockupScale: 1 },
   "/step-app": { image: "step-app-01-hq.png", mockupPosition: "12% 12%" },
   "/ski-resort": { image: "ski-booking-screen.png", mockupPosition: "50% 50%", mockupScale: 1 },
   "/investments": { image: "investments-main-screen.png", mockupPosition: "50% 50%", mockupScale: 1 },
@@ -177,6 +177,24 @@ const jobs = [
   ["Веб-дизайнер", "Схема", "2019 — 2021", "Лендинги, email-коммуникации и digital-материалы для Яндекса, X5 Retail, ВДНХ и других компаний."],
 ];
 
+const companyLinks = {
+  "MateÇa": "https://mateca.agency",
+  "Яндекс Практикум": "https://practicum.yandex.ru/",
+  "AIC": "https://www.aic.ru/",
+  "Схема": "https://sxema.agency",
+};
+
+function CompanyName({ company }) {
+  const href = companyLinks[company];
+  return href ? <Link href={href} className="company-link">{company}</Link> : company;
+}
+
+function CompanyLogo({ company, src, className = "" }) {
+  const logo = <img className={className} src={src} alt=""/>;
+  const href = companyLinks[company];
+  return href ? <Link href={href} className="company-logo-link" aria-label={`Сайт ${company}`}>{logo}</Link> : logo;
+}
+
 const companyLogos = [
   ["cv-e22354aee8fa7ae4.avif", "MateÇa"], ["cv-f28cd5dddae5b1c1.avif", "Вместе.ру"],
   ["cv-2d26053dd4cb03b0.avif", "Яндекс Практикум"], ["cv-cff869438157b4cc.avif", "Trinity Monsters"],
@@ -187,7 +205,7 @@ const tools = [
   [`${A}figma-logo.svg`, "Figma", "Проектирование интерфейсов", "figma"],
   [chatgptDarkIcon, "ChatGPT", "Исследования и тексты", "chatgpt"],
   [`${A}codex-logo-transparent.webp`, "Codex", "Прототипирование в коде", "codex"],
-  [siClaude, "Claude", "Аналитика и идеи", "claude"],
+  [siClaude, "Claude", "Прототипирование в коде", "claude"],
 ];
 
 const galleryCaptions = {
@@ -338,11 +356,11 @@ function AboutPane() {
     </InfoSection>
 
     <InfoSection title="Подход">
-      <div className="principles"><p>Начинаю с задач пользователя и бизнеса, а не с готового визуального решения.</p><p>Проверяю гипотезы исследованиями и прототипами до дорогой реализации.</p><p>Думаю о передаче в разработку и поддерживаю решения понятной документацией.</p><p>Люблю нестандартные идеи, нишевые приложения и эксперименты с нейросетями.</p></div>
+      <div className="principles"><p>Начинаю с задач пользователя и бизнеса, а не с готового визуального решения.</p><p>Проверяю гипотезы исследованиями и прототипами до передачи в разработку.</p><p>Думаю о передаче в разработку и поддерживаю решения понятной документацией.</p><p>Люблю нестандартные идеи, нишевые приложения и эксперименты с нейросетями.</p></div>
     </InfoSection>
 
     <InfoSection title="Опыт работы">
-      <div className="experience-list">{jobs.map(([role, company, date, text], index)=><article key={company}><img className="experience-logo" src={assetUrl(companyLogos[index][0])} alt=""/><div><h3>{role}</h3><p className="job-meta">{company} · {date}</p><p>{text}</p></div></article>)}</div>
+      <div className="experience-list">{jobs.map(([role, company, date, text], index)=><article key={company}><CompanyLogo company={company} src={assetUrl(companyLogos[index][0])} className="experience-logo"/><div><h3>{role}</h3><p className="job-meta"><CompanyName company={company}/> · {date}</p><p>{text}</p></div></article>)}</div>
     </InfoSection>
 
     <footer className="reach" id="contact"><h2>Контакты</h2><p className="muted">Предлагаю написать и назначить созвон для знакомства.</p><div className="contact-bottom-row"><nav className="contact-fields" aria-label="Контакты"><Link href="https://t.me/myautau">Telegram</Link><Link href="mailto:myautau13@gmail.com">Email</Link><Link href="https://www.linkedin.com/in/viktoriamatveeva">LinkedIn</Link></nav><a className="back-to-top" href="#intro" aria-label="Вернуться наверх" onClick={(event) => { event.preventDefault(); if (window.innerWidth <= 809) window.scrollTo({ top: 0, behavior: "smooth" }); else event.currentTarget.closest(".about-pane")?.scrollTo({ top: 0, behavior: "smooth" }); }}><ArrowUp aria-hidden="true"/></a></div></footer>
@@ -373,12 +391,12 @@ const cases = {
   "/ama": {
     title: "AMA", subtitle: "Переосмысление консьерж-сервиса для клиентов private banking", meta: [["Продукт","Мобильное приложение"],["Направление","Консьерж-сервис"],["Платформа","iOS, Android"]],
     intro: "Премиальный консьерж-сервис ВТБ для путешествий, ресторанов, привилегий и персональных запросов.",
-    hideSections: ["О задаче", "Аудитория", "Стратегия"],
-    sections: [["О задаче","Дать клиенту выбор: решить вопрос самостоятельно, обратиться к менеджеру или получить готовое предложение."],["Аудитория","Учесть скорость для new money, деликатный сервис для old money и самостоятельность для self-made."],["Стратегия","Объединила чат, закрытые предложения, календарь, уведомления и семейные профили."],["Визуальная концепция","Синие градиенты, металл и мягкое свечение создают технологичный премиальный образ."],["Чат и артефакты","Запросы превращаются в понятные карточки, билеты и виджеты со статусами."],["Умная лента","Лента учитывает геолокацию и события, а бронирования попадают в планы."],["Коллекции","Места и идеи можно сохранить в подборку и отправить консьержу."],["CRM","В CRM собраны задачи, статусы, предложения, контекст клиента и SLA."],["Результат","Концепция получила инвестиции и перешла к реализации."]],
+    hideSections: ["О задаче", "Аудитория", "Стратегия", "Результат"],
+    sections: [["О задаче","Дать клиенту выбор: решить вопрос самостоятельно, обратиться к менеджеру или получить готовое предложение."],["Аудитория","Учесть скорость для new money, деликатный сервис для old money и самостоятельность для self-made."],["Стратегия","Объединила чат, закрытые предложения, календарь, уведомления и семейные профили."],["Визуальная концепция","Синие градиенты, металл и мягкое свечение создают технологичный премиальный образ."],["Чат","Запросы превращаются в понятные виджеты прямо внутри чата: авиабилеты, билеты на концерты, бронирования ресторанов и отелей."],["Умная лента","Лента автоматически подстраивается под поездки и события пользователя: перед концертом предлагает рестораны в нужном городе, а в путешествии — отели, курорты и спа."],["Коллекции","Места и идеи можно сохранить в подборку и отправить консьержу."],["CRM","В CRM собраны задачи, статусы, предложения, контекст клиента и SLA."],["Результат","Концепция получила инвестиции и перешла к реализации."]],
     gallery: ["ama/ama-11.jpg","ama/ama-12.jpg","ama/ama-14.jpg","ama/ama-15.jpg","ama/ama-17.jpg","ama/ama-18.jpg","ama/ama-04.jpg","ama/ama-05.jpg","ama/ama-06.jpg","ama/ama-07.jpg","ama/ama-08.jpg","ama/ama-03.jpg"]
   },
   "/ski-resort": {
-    title: "Манжерок", subtitle: "Приложение для горнолыжного курорта", meta: [["Продукт","Мобильное приложение"],["Направление","Travel"],["Платформа","iOS, Android"]],
+    title: "Манжерок", subtitle: "Приложение для горнолыжного курорта", meta: [["Продукт","Мобильное приложение"],["Направление","Туризм"],["Платформа","iOS, Android"]],
     intro: "Приложение курорта на Алтае для бронирования жилья, покупки билетов, навигации и просмотра камер.",
     sections: [
       ["О задаче","Собрать в одном приложении основные сценарии гостя: выбор жилья, покупку ски-пассов и билетов, карту курорта и статус канатных дорог."],
@@ -420,27 +438,27 @@ const cases = {
     gallery: ["source/vmeste-old-nav.png","source/vmeste-layouts.png","source/vmeste-profile-layout.png","source/vmeste-notifications.png",{ type: "video", src: `${V}vmeste-navigation.mp4`, caption: "Навигатор Вместе.ру — видео проекта" },"source/vmeste-stories-collage.png","other-portrait-02-hq.png"]
   },
   "/investments": {
-    title: "Инвестиции", subtitle: "Концепт мобильного приложения для управления инвестициями", meta: [["Продукт","Мобильное приложение"],["Направление","Fintech"]],
+    title: "Инвестиции", subtitle: "Концепт мобильного приложения для управления инвестициями", meta: [["Продукт","Мобильное приложение"],["Направление","Финтех"]],
     intro: "Концепт мобильного приложения для управления портфелем: динамика активов, структура вложений и ключевые показатели в одном сценарии.",
     sections: [],
     galleryLayout: "stack",
     gallery: [{ type: "video", src: `${V}investments-hq.mp4` },"source/investments-sail.png"]
   },
   "/trinity-monsters": {
-    title: "Trinity Monsters", subtitle: "Концепт раздела вакансий в эстетике Windows 98", meta: [["Продукт","Раздел вакансий"],["Направление","HR"],["Платформа","Web"]],
+    title: "Trinity Monsters", subtitle: "Концепт раздела вакансий в эстетике Windows 98", meta: [["Продукт","Раздел вакансий"],["Направление","Подбор персонала"],["Платформа","Web"]],
     intro: "Раздел вакансий в формате диалога и эстетике Windows 98.",
     sections: [["Идея","Превратить обычный список вакансий в интерактивный сценарий знакомства с командой."],["Механика","Пользователь выбирает направление, читает описание и оставляет отклик внутри последовательного диалога."],["Визуальный язык","Интерфейс отсылает к Windows 98 и сочетает чёрный фон с ярким зелёным акцентом."]],
     gallery: ["trinity-01-hq.png","trinity-02-hq.png","trinity-03-hq.png","trinity-04-hq.png"]
   },
   "/avito-fashion": {
-    title: "Avito Fashion", subtitle: "Концепция fashion-вертикали внутри Avito", meta: [["Продукт","Раздел маркетплейса"],["Направление","Marketplace"]],
+    title: "Avito Fashion", subtitle: "Концепция fashion-вертикали внутри Avito", meta: [["Продукт","Раздел маркетплейса"],["Направление","Маркетплейс"]],
     intro: "Концепция раздела для выгодных покупок одежды, обуви, аксессуаров и винтажа.",
     sections: [],
     galleryLayout: "stack",
     gallery: ["source/avito-fashion-frame-4.png","source/avito-fashion-frame-6.png","source/avito-fashion-frame-detail.png"]
   },
   "/concept": {
-    title: "Концепт", subtitle: "Концепция мобильного приложения", meta: [["Продукт","Мобильное приложение"],["Направление","E-commerce"],["Платформа","iOS, Android"]],
+    title: "Концепт", subtitle: "Концепция мобильного приложения", meta: [["Продукт","Мобильное приложение"],["Направление","Электронная коммерция"],["Платформа","iOS, Android"]],
     intro: "Мобильный e-commerce-концепт с каталогом, подборками и быстрыми сценариями.",
     sections: [["О задаче","Собрать насыщенный контент в понятную структуру и сохранить выразительную визуальную подачу."],["Интерфейс","Карточки, подборки и навигация объединены в компактную мобильную систему."],["Визуальная система","Тёмная основа и цветовые акценты помогают разделять контент и выделять ключевые действия."]],
     gallery: [
@@ -449,7 +467,7 @@ const cases = {
     ]
   },
   "/other-projects": {
-    title: "Другие работы и концепты", subtitle: "", meta: [["Платформа","iOS, Android, Web"]],
+    title: "Другие проекты", subtitle: "", meta: [["Платформа","iOS, Android, Web"]],
     intro: "Реализованные проекты и концепты — мобильные приложения и сайты.",
     sections: [],
     gallery: [
@@ -468,7 +486,7 @@ const cases = {
     ]
   },
   "/step-app": {
-    title: "Step App", subtitle: "Ключевые сценарии Web3-приложения", meta: [["Продукт","Мобильное приложение"],["Направление","Web3, fitness"],["Платформа","iOS, Android, Web"]],
+    title: "Step App", subtitle: "Ключевые сценарии Web3-приложения", meta: [["Продукт","Мобильное приложение"],["Направление","Web3 и фитнес"],["Платформа","iOS, Android, Web"]],
     intro: "Web3-приложение с бегом, кошельком и виртуальными кроссовками.",
     sections: [["Основные сценарии","Регистрация, кошелёк, маркетплейс, инвентарь и запуск тренировки собраны в единой системе."],["Инвентарь","Пользователь управляет кроссовками и их характеристиками, отслеживает ресурсы и прогресс."],["Тренировка","Во время пробежки интерфейс показывает темп, дистанцию, маршрут и игровые показатели."]],
     gallery: ["step-app-01-hq.png","step-app-02-hq.png"]
@@ -480,25 +498,25 @@ const cases = {
     gallery: ["stoloto-hq.png"]
   },
   "/travel-concept": {
-    title: "Туризм", subtitle: "Концепт мобильного приложения для планирования путешествий", meta: [["Продукт","Мобильное приложение"],["Направление","Travel"],["Платформа","iOS"]],
+    title: "Туризм", subtitle: "Концепт мобильного приложения для планирования путешествий", meta: [["Продукт","Мобильное приложение"],["Направление","Туризм"],["Платформа","iOS"]],
     intro: "Концепт выбора направлений и активностей по интересам.",
     sections: [["Идея","Сделать планирование путешествия лёгким выбором впечатлений."],["Механика","Карточки мест можно пропускать или добавлять в маршрут."],["Визуальная система","Крупные фотографии, мягкие градиенты и плавная анимация."]],
     gallery: [{ type: "video", src: `${V}TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4` }]
   },
   "/flight-tracker": {
-    title: "Авиарейсы", subtitle: "Концепт приложения для отслеживания перелётов", meta: [["Продукт","Мобильное приложение"],["Направление","Travel"],["Платформа","iOS"]],
+    title: "Авиарейсы", subtitle: "Концепт приложения для отслеживания перелётов", meta: [["Продукт","Мобильное приложение"],["Направление","Туризм"],["Платформа","iOS"]],
     intro: "Концепт для отслеживания рейсов на карте.",
     sections: [["О задаче","Объединить карту, маршрут и список рейсов."],["Интерфейс","Статус, время и детали рейса доступны на одном экране."],["Темы","Проверить читаемость в светлой, синей и тёмной темах."]],
     gallery: ["flight-concept-hq.png"]
   },
   "/web3-education": {
-    title: "Web3 Education", subtitle: "Концепция образовательной платформы про NFT и Web3", meta: [["Продукт","Образовательная платформа"],["Направление","Web3, education"],["Платформа","Web"]],
+    title: "Web3 Education", subtitle: "Концепция образовательной платформы про NFT и Web3", meta: [["Продукт","Образовательная платформа"],["Направление","Web3 и образование"],["Платформа","Web"]],
     intro: "Образовательная платформа о NFT и Web3.",
     sections: [["О задаче","Сделать Web3 понятнее и объединить обучение, навигацию и прогресс."],["Структура","Выстроить материалы от базовых тем к сложным."],["Визуальный язык","Тёмная основа и зелёные акценты поддерживают технологичный характер."]],
     gallery: ["other-screen-hq.png","other-portrait-01-hq.png"]
   },
   "/other": {
-    title: "Другие проекты", subtitle: "Мобильные приложения, сервисы, сайты и визуальные концепции", meta: [["Продукт","Подборка проектов"],["Направление","Digital products"],["Платформа","Mobile, Web"]],
+    title: "Другие проекты", subtitle: "Мобильные приложения, сервисы, сайты и визуальные концепции", meta: [["Продукт","Подборка проектов"],["Направление","Цифровые продукты"],["Платформа","Mobile, Web"]],
     intro: "Подборка работ для Web3, e-commerce, fintech, travel, HR и социальных продуктов.",
     sections: [["Step App","Ключевые сценарии Web3-приложения: регистрация, кошелёк, маркетплейс, инвентарь и бег."],["Avito Fashion","Концепция вертикали для выгодных покупок одежды, обуви, аксессуаров и винтажа."],["Столото","Массовая проверка билетов разных лотерей через QR-сканирование и ручной ввод."],["Trinity Monsters","Раздел вакансий в эстетике Windows 98, построенный как диалог в мессенджере."],["Другие концепты","Туризм, отслеживание рейсов, инвестиции в недвижимость и образовательная Web3-платформа."]],
     gallery: ["step-app-01-hq.png","step-app-02-hq.png","avito-fashion-hq.png","stoloto-hq.png","trinity-04-hq.png","trinity-02-hq.png","trinity-03-hq.png","trinity-01-hq.png","flight-concept-hq.png","other-screen-hq.png","other-portrait-01-hq.png","other-portrait-02-hq.png","other-ba1a805d27423031.webp"]
@@ -571,7 +589,7 @@ function CasePage({ data }) {
     const isMotion = isVideo || isVimeo;
     const src = isMotion ? item.src : assetUrl(item);
     const isVmesteStories = !isMotion && item === "other-ba1a805d27423031.webp";
-    const isPaddedConcept = !isMotion && data.title === "Другие работы и концепты" && (item === "stoloto-hq.png" || item === "flight-concept-hq.png");
+    const isPaddedConcept = !isMotion && data.title === "Другие проекты" && (item === "stoloto-hq.png" || item === "flight-concept-hq.png");
     const backgroundColor = !isMotion ? galleryBackgrounds[item] : undefined;
     const caption = isMotion ? item.caption || `${data.title} — видео проекта` : galleryCaptions[item] || `${data.title} — экран проекта`;
     return <figure className={`${isVimeo ? "gallery-vimeo-card " : ""}${isVmesteStories ? "vmeste-stories-card " : ""}${isPaddedConcept ? "padded-concept-card" : ""}`.trim() || undefined} key={src} style={backgroundColor ? { backgroundColor } : undefined}>{isVimeo
@@ -590,10 +608,10 @@ function CasePage({ data }) {
   const lightboxIsMotion = lightboxIsVideo || lightboxIsVimeo;
   const lightboxIsVmeste = data.title === "Вместе.ру";
   const lightboxIsVmesteStories = lightboxEntry === "other-ba1a805d27423031.webp";
-  const lightboxIsPaddedConcept = data.title === "Другие работы и концепты" && (lightboxEntry === "stoloto-hq.png" || lightboxEntry === "flight-concept-hq.png");
+  const lightboxIsPaddedConcept = data.title === "Другие проекты" && (lightboxEntry === "stoloto-hq.png" || lightboxEntry === "flight-concept-hq.png");
   const lightboxCaption = lightboxIsMotion ? lightboxEntry.caption || `${data.title} — видео проекта` : galleryCaptions[lightboxEntry] || `${data.title} — экран проекта`;
   const lightboxDimensions = galleryDimensions[lightboxEntry];
-  const usesUnifiedCorners = ["Вместе.ру", "Манжерок", "Другие работы и концепты"].includes(data.title);
+  const usesUnifiedCorners = ["Вместе.ру", "Манжерок", "Другие проекты"].includes(data.title);
   const lightboxBackground = !lightboxIsMotion ? galleryBackgrounds[lightboxEntry] : undefined;
   const lightboxMedia = lightboxIsVimeo
     ? <div className="lightbox-vimeo-frame"><iframe src={mediaItems[lightboxIndex]} title={lightboxCaption} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen/></div>
@@ -605,7 +623,7 @@ function CasePage({ data }) {
 }
 
 function ResumePage() {
-  return <main className="resume-shell"><aside className="resume-summary"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><img className="resume-photo" src={`${A}cv-portrait.avif`} alt="Вика Матвеева"/><h1>Вика Матвеева</h1><p className="muted">Продуктовый дизайнер из Санкт-Петербурга с опытом более пяти лет.</p><Link href="mailto:myautau13@gmail.com" className="light-button">Связаться</Link></aside><section className="resume-content"><h2>Опыт работы.</h2>{jobs.map(([role,company,date,text],i)=><article className="resume-job" key={company}><img src={assetUrl(companyLogos[i][0])} alt=""/><div><h3>{company}</h3><p>{role} · {date}</p><span>{text}</span></div></article>)}<h2>Инструменты.</h2><div className="resume-tools">Figma · ChatGPT · Codex · Claude · Framer</div></section></main>;
+  return <main className="resume-shell"><aside className="resume-summary"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><img className="resume-photo" src={`${A}cv-portrait.avif`} alt="Вика Матвеева"/><h1>Вика Матвеева</h1><p className="muted">Продуктовый дизайнер из Санкт-Петербурга с опытом более пяти лет.</p><Link href="mailto:myautau13@gmail.com" className="light-button">Связаться</Link></aside><section className="resume-content"><h2>Опыт работы.</h2>{jobs.map(([role,company,date,text],i)=><article className="resume-job" key={company}><CompanyLogo company={company} src={assetUrl(companyLogos[i][0])}/><div><h3><CompanyName company={company}/></h3><p>{role} · {date}</p><span>{text}</span></div></article>)}<h2>Инструменты.</h2><div className="resume-tools">Figma · ChatGPT · Codex · Claude · Framer</div></section></main>;
 }
 
 function ContactPage() { return <main className="contact-shell"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><div><h1>Связаться.</h1><p>Предлагаю написать и назначить созвон для знакомства.</p><Link href="mailto:myautau13@gmail.com">myautau13@gmail.com</Link><Link href="https://t.me/myautau">Telegram: @myautau</Link></div></main>; }

@@ -16,6 +16,8 @@ When implementing from a selected generated mock, treat that image as the source
 - In the «Вместе.ру» case, preserve each gallery asset's original composition and pink backing. Apply the shared small corner radius only to the outer gallery and lightbox containers; do not flatten, crop, or otherwise redraw the source images to create rounding.
 - Keep «Карта разделов и функций Навигатора» at its original scale. Keep the established pink breathing room around «Сторис о новых функциях приложения» in both the gallery and full-screen viewer.
 - Apply consistent Russian typography site-wide: keep short prepositions and conjunctions with the following word, em dashes with surrounding non-breaking spaces, and digit groups with non-breaking spaces, including text added during route changes.
-- Keep contact links visually light like the Framer reference: regular weight, softened white, and a thin one-pixel underline.
+- Keep contact links and «Все проекты» visually light like the Framer reference: regular weight, softened white, and a thin one-pixel underline that always inherits the text color. On hover, both text and underline use the reference color `#ababab`.
 - Use the same small outer media radius for «Манжерок» and «Другие работы и концепты» as for «Вместе.ру». Preserve the source image files and their scale; mask pre-existing transparent corners with matching container backgrounds instead of editing the images.
 - Do not push or publish changes to GitHub until Viktoria explicitly says «заливай».
+- On the mobile homepage, keep project-card containers slightly taller than square so phone mockups have breathing room and do not overlap the captions.
+- Keep project «Направление» values in Russian for consistency; retain only proper technology names such as Web3 in their established spelling.
