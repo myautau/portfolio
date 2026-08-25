@@ -551,9 +551,11 @@ function CasePage({ data }) {
   const pinchGestureRef = useRef(null);
   const lightboxTransformRef = useRef(lightboxTransform);
   const lightboxMediaRef = useRef(null);
+  const lightboxBaseSizeRef = useRef(null);
   const lightboxScrollRef = useRef(null);
   const lightboxOriginRef = useRef(null);
   const updateLightboxTransform = (nextTransform) => {
+    if (nextTransform.scale <= 1) lightboxBaseSizeRef.current = null;
     lightboxTransformRef.current = nextTransform;
     setLightboxTransform(nextTransform);
   };
@@ -682,8 +684,16 @@ function CasePage({ data }) {
     const media = lightboxMediaRef.current;
     if (!media || scale <= 1) return { scale: 1, x: 0, y: 0 };
     const rect = media.getBoundingClientRect();
-    const baseWidth = rect.width / Math.max(lightboxTransformRef.current.scale, 1);
-    const baseHeight = rect.height / Math.max(lightboxTransformRef.current.scale, 1);
+    if (media instanceof HTMLImageElement && !lightboxBaseSizeRef.current) {
+      lightboxBaseSizeRef.current = { width: rect.width, height: rect.height };
+    }
+    const isRenderedAtZoomedSize = media instanceof HTMLImageElement && lightboxBaseSizeRef.current;
+    const baseWidth = isRenderedAtZoomedSize
+      ? lightboxBaseSizeRef.current.width
+      : rect.width / Math.max(lightboxTransformRef.current.scale, 1);
+    const baseHeight = isRenderedAtZoomedSize
+      ? lightboxBaseSizeRef.current.height
+      : rect.height / Math.max(lightboxTransformRef.current.scale, 1);
     const intrinsicMaxScale = media instanceof HTMLImageElement && media.naturalWidth > 0
       ? Math.max(1, Math.min(4, media.naturalWidth / baseWidth, media.naturalHeight / baseHeight))
       : 2.5;
@@ -832,11 +842,20 @@ function CasePage({ data }) {
   const usesUnifiedCorners = ["Вместе.ру", "Манжерок", "Другие проекты"].includes(data.title);
   const lightboxBackground = !lightboxIsMotion ? (data.title === "Манжерок" ? "#1b1b1b" : galleryBackgrounds[lightboxEntry]) : undefined;
   const lightboxIsSkiOnDarkBackground = data.title === "Манжерок" && !lightboxIsMotion;
+  const imageZoomSize = lightboxTransform.scale > 1 && lightboxBaseSizeRef.current
+    ? {
+      width: `${lightboxBaseSizeRef.current.width * lightboxTransform.scale}px`,
+      height: `${lightboxBaseSizeRef.current.height * lightboxTransform.scale}px`,
+      maxWidth: "none",
+      maxHeight: "none",
+      transform: `translate3d(${lightboxTransform.x}px, ${lightboxTransform.y}px, 0)`,
+    }
+    : { transform: `translate3d(${lightboxTransform.x}px, ${lightboxTransform.y}px, 0) scale(${lightboxTransform.scale})` };
   const lightboxMedia = lightboxIsVimeo
     ? <div key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={`lightbox-vimeo-frame${lightboxIsVmeste ? " lightbox-vmeste-video" : ""}${lightboxTransform.scale > 1 ? " lightbox-pinched" : ""}`} style={{ transform: `translate3d(${lightboxTransform.x}px, ${lightboxTransform.y}px, 0) scale(${lightboxTransform.scale})` }}><iframe src={mediaItems[lightboxIndex]} title={lightboxCaption} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen/></div>
     : lightboxIsVideo
       ? <video key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={`${lightboxIsVmeste ? "lightbox-vmeste-video " : ""}${lightboxTransform.scale > 1 ? "lightbox-pinched" : ""}`.trim() || undefined} style={{ transform: `translate3d(${lightboxTransform.x}px, ${lightboxTransform.y}px, 0) scale(${lightboxTransform.scale})` }} src={mediaItems[lightboxIndex]} autoPlay muted loop playsInline disablePictureInPicture disableRemotePlayback/>
-      : <img key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={`${isDesktopZoomed ? "lightbox-desktop-zoomed " : ""}${usesUnifiedCorners ? "lightbox-uniform " : ""}${lightboxIsVmeste ? "lightbox-vmeste " : ""}${lightboxIsVmesteStories ? "lightbox-stories " : ""}${lightboxIsPaddedConcept ? "lightbox-padded-concept " : ""}${lightboxIsSkiOnDarkBackground ? "lightbox-ski-dark" : ""}${lightboxTransform.scale > 1 ? " lightbox-pinched" : ""}`.trim()} style={{ ...(lightboxBackground ? { backgroundColor: lightboxBackground, "--media-background": lightboxBackground } : {}), transform: `translate3d(${lightboxTransform.x}px, ${lightboxTransform.y}px, 0) scale(${lightboxTransform.scale})` }} src={mediaItems[lightboxIndex]} width={lightboxDimensions?.[0]} height={lightboxDimensions?.[1]} alt="" onClick={toggleDesktopImageZoom} onLoad={(event) => event.currentTarget.classList.toggle("lightbox-tall", event.currentTarget.naturalHeight > event.currentTarget.naturalWidth)}/>;
+      : <img key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={`${isDesktopZoomed ? "lightbox-desktop-zoomed " : ""}${usesUnifiedCorners ? "lightbox-uniform " : ""}${lightboxIsVmeste ? "lightbox-vmeste " : ""}${lightboxIsVmesteStories ? "lightbox-stories " : ""}${lightboxIsPaddedConcept ? "lightbox-padded-concept " : ""}${lightboxIsSkiOnDarkBackground ? "lightbox-ski-dark" : ""}${lightboxTransform.scale > 1 ? " lightbox-pinched lightbox-high-res-zoom" : ""}`.trim()} style={{ ...(lightboxBackground ? { backgroundColor: lightboxBackground, "--media-background": lightboxBackground } : {}), ...imageZoomSize }} src={mediaItems[lightboxIndex]} width={lightboxDimensions?.[0]} height={lightboxDimensions?.[1]} alt="" onClick={toggleDesktopImageZoom} onLoad={(event) => event.currentTarget.classList.toggle("lightbox-tall", event.currentTarget.naturalHeight > event.currentTarget.naturalWidth)}/>;
   const visibleSections = data.sections.filter(([title]) => !(data.hideSections || []).includes(title));
   return <><main className="case-shell"><section className="case-info" id="project-info"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><header className={hasProjectCta ? "has-cta" : "no-cta"}><h1>{data.title}</h1><p>{data.subtitle}</p>{hasProjectCta && <Link href="https://t.me/myautau" className="light-button case-cta">Обсудить проект</Link>}</header><div className="case-meta">{data.meta.filter(([k]) => k !== "Продукт").map(([k,v])=><p key={k}><span>{k}</span><b>{v}</b></p>)}</div><p className={`case-intro${visibleSections.length === 0 ? " case-intro-last" : ""}`}>{data.intro}</p>{visibleSections.map(([title,text])=><article className={`case-text${title === "О задаче" ? " case-task" : ""}`} key={title} id={title.toLowerCase().replaceAll(" ","-")}><h2>{title}</h2><p>{text}</p></article>)}<Link href="/" className="text-link">Все проекты <ArrowUpRight size={16}/></Link></section><section className={`case-gallery${usesUnifiedCorners ? " uniform-media-gallery" : ""}${data.title === "Вместе.ру" ? " vmeste-gallery" : ""}${data.title === "Манжерок" ? " ski-gallery" : ""}${data.gallery.length === 1 ? " single-media" : ""}${data.galleryLayout === "stack" ? " stack-media" : ""}`} id="gallery"><div className="gallery-desktop"><div>{leftGallery.map(renderImage)}</div><div>{rightGallery.map(renderImage)}</div></div><div className="gallery-mobile">{data.gallery.map(renderImage)}</div></section></main>{lightboxIndex !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Просмотр материалов проекта"><div ref={lightboxScrollRef} className={`lightbox-scroll${lightboxTransform.scale > 1 || isDesktopZoomed ? " zoomed" : ""}`} onClick={(event) => event.target === event.currentTarget && setLightboxIndex(null)} onTouchStart={handleLightboxTouchStart} onTouchMove={handleLightboxTouchMove} onTouchEnd={handleLightboxTouchEnd} onTouchCancel={() => { swipeStartRef.current = null; pinchGestureRef.current = null; }}>{lightboxMedia}</div><div className="lightbox-controls"><span className="lightbox-caption">{lightboxCaption}</span><button className="lightbox-close" type="button" onClick={() => setLightboxIndex(null)}>Закрыть</button>{mediaItems.length > 1 && <><button className="lightbox-arrow lightbox-prev" type="button" onClick={() => changeLightboxIndex(index => (index - 1 + mediaItems.length) % mediaItems.length)} aria-label="Предыдущий материал"><ChevronLeft aria-hidden="true"/></button><button className="lightbox-arrow lightbox-next" type="button" onClick={() => changeLightboxIndex(index => (index + 1) % mediaItems.length)} aria-label="Следующий материал"><ChevronRight aria-hidden="true"/></button><span className="lightbox-count">{lightboxIndex + 1} / {mediaItems.length}</span></>}</div></div>}</>;
 }

@@ -29,6 +29,7 @@ When implementing from a selected generated mock, treat that image as the source
 - On the mobile homepage, position phone mockups slightly above the vertical center to keep the top gap compact.
 - On mobile, use a consistent 16px horizontal gutter for text blocks, project cards, galleries, resume, contacts, and internal case pages.
 - In mobile full-screen galleries, support horizontal swipe navigation and pinch/pan for image and video material; cap image zoom at native source resolution to avoid soft upscaling.
+- On mobile, render a zoomed image at its expanded layout dimensions rather than scaling a composited layer, so pinch-to-zoom stays sharp when the source has enough pixels.
 - In mobile full-screen galleries, keep the material title, «Закрыть», navigation arrows, and counter visible as a fixed layer above the media; every newly opened or swiped slide starts from the same unzoomed top position.
 - On mobile, keep both the homepage «Обо мне / Работы» switcher and case «О проекте / Галерея» switcher fixed to the viewport top, outside animated route containers.
 - Keep both mobile switchers compact with 12.5px labels, matching the mobile «Назад» button typography.
