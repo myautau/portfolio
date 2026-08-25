@@ -226,9 +226,13 @@ const galleryCaptions = {
   "ski-f0077e8e46537e02.avif": "Основные экраны приложения курорта",
   "ski-hand-interface-new.png": "Главный экран приложения",
   "ski-a6951fee0dc0d8da.avif": "Главная, услуги и персональные предложения",
+  "ski-a6951fee0dc0d8da-clean.avif": "Главная, услуги и персональные предложения",
+  "source/ski-a695-dark.png": "Главная, услуги и персональные предложения",
   "ski-4e5ac801adcc97b3.avif": "Экран информации об отеле",
   "source/manzherok-hotel-detail.png": "Экран информации об отеле",
   "ski-ebd18ef95ae2da98.avif": "Выбор отеля, номера и тарифа",
+  "ski-ebd18ef95ae2da98-clean.avif": "Выбор отеля, номера и тарифа",
+  "source/ski-ebd-dark.png": "Выбор отеля, номера и тарифа",
   "ski-eb839b4dfdf80618.avif": "Оформление бронирования и QR-билет",
   "ski-06-hq.png": "Поиск объектов и построение маршрута",
   "ski-07-hq.png": "Настройки карты и маршрут по курорту",
@@ -241,9 +245,9 @@ const galleryCaptions = {
   "vmeste-final-1.png": "Навигатор, сервисы и сообщества рядом",
   "vmeste-c2e5b4da20d62cee.avif": "Варианты Навигатора для разных пользователей",
   "vmeste-65f1e8d4f0648310.avif": "Навигатор и центр уведомлений",
-  "other-portrait-02-hq.png": "Объявления и соседские сценарии Вместе.ру",
+  "other-portrait-02-hq.png": "Промоскриншоты для App Store и Google Play",
   "other-ba1a805d27423031.webp": "Сторис о новых функциях приложения",
-  "source/vmeste-old-nav.png": "Карта разделов и функций Навигатора",
+  "source/vmeste-old-nav.png": "Навигатор приложения до редизайна",
   "source/vmeste-layouts.png": "Навигатор и основные сервисы",
   "source/vmeste-stories-collage.png": "Сторис о новых функциях приложения",
   "source/vmeste-profile-layout.png": "Переключение профилей жителя и бизнеса",
@@ -267,6 +271,8 @@ const galleryCaptions = {
   "flight-concept-hq.png": "Маршрут рейса в светлой, синей и тёмной темах",
   "other-screen-hq.png": "Главная и каталог образовательной Web3-платформы",
   "other-portrait-01-hq.png": "Дашборд показателей и сценариев продукта",
+  "mentory-main.avif": "Mentory — главная, каталог курсов и образовательные партнёры",
+  "mentory-progress.avif": "Mentory — прогресс обучения и результаты курса",
 };
 
 const galleryDimensions = {
@@ -276,8 +282,10 @@ const galleryDimensions = {
 
 const galleryBackgrounds = {
   "ski-a6951fee0dc0d8da.avif": "#1b1b1b",
+  "ski-a6951fee0dc0d8da-clean.avif": "#1b1b1b",
   "ski-4e5ac801adcc97b3.avif": "#1b1b1b",
   "ski-ebd18ef95ae2da98.avif": "#1b1b1b",
+  "ski-ebd18ef95ae2da98-clean.avif": "#1b1b1b",
   "ski-eb839b4dfdf80618.avif": "#1b1b1b",
   "ski-06-hq.png": "#1b1b1b",
   "ski-07-hq.png": "#1b1b1b",
@@ -293,6 +301,8 @@ const galleryBackgrounds = {
   "flight-concept-hq.png": "#1b1b1b",
   "other-screen-hq.png": "#000",
   "other-portrait-01-hq.png": "#000",
+  "mentory-main.avif": "#000",
+  "mentory-progress.avif": "#000",
   "other-portrait-02-hq.png": "#fef6f2",
 };
 
@@ -317,7 +327,7 @@ function ProjectCard({ project, priority = false }) {
 
 function MobileSwitch({ mode = "home" }) {
   const [active, setActive] = useState("first");
-  const first = mode === "home" ? ["Обо мне", "#intro"] : ["О задаче", "#project-info"];
+  const first = mode === "home" ? ["Обо мне", "#intro"] : ["О проекте", "#project-info"];
   const second = mode === "home" ? ["Работы", "#work"] : ["Галерея", "#gallery"];
   useEffect(() => {
     const target = document.querySelector(second[1]);
@@ -410,10 +420,10 @@ const cases = {
     gallery: [
       "ski-hand-interface-new.png",
       "ski-f0077e8e46537e02.avif",
-      { type: "video", src: `${V}ls1FrvqnYmzT7Z7QrqCSwI1WANY.mp4`, caption: "Все разделы главной страницы: бронирование, меню, отели и шале, афиша, развлечения, рестораны и бары" },
-      "ski-a6951fee0dc0d8da.avif",
+      { type: "video", src: `${V}ls1FrvqnYmzT7Z7QrqCSwI1WANY.mp4`, caption: "Все разделы главной страницы" },
+      "source/ski-a695-dark.png",
       "source/manzherok-hotel-detail.png",
-      "ski-ebd18ef95ae2da98.avif",
+      "source/ski-ebd-dark.png",
       "ski-eb839b4dfdf80618.avif",
       { type: "video", src: `${V}9zLzrZKGw9fUPqGKrnHkPG2Mny4.mp4`, caption: "Выбор канатной дороги на карте и переход к её карточке" },
       "ski-06-hq.png",
@@ -428,14 +438,14 @@ const cases = {
     sections: [
       ["О задаче","В приложении появился раздел частных объявлений. Нужно было встроить его в перегруженный Навигатор и сделать основные функции заметнее."],
       ["Проблемы","Функции было трудно находить, а разделы, действия и виджеты почти не отличались."],
-      ["Ресерч и дискавери","На основе общения с пользователями составили JTBD и сформулировали гипотезы. Результат решили оценивать по MAU, посещаемости Навигатора, переходам из него и конверсии сторис."],
+      ["Ресерч и дискавери","На основе общения с пользователями составили JTBD и сформулировали гипотезы. Результат редизайна решили оценивать по посещаемости Навигатора, переходам в другие разделы, количеству переходов к полезным сценариям и переходам из сторис."],
       ["Проработка структуры","Разделила контент на разделы, виджеты, данные, действия и ссылки."],
       ["Валидация прототипов","Протестировали прототипы на 13 пользователях и уточнили названия, порядок и доступность функций."],
       ["Инсайты","По результатам тестирования Навигатор жителя стал основным, бизнес — второй вкладкой, а создание объявления — первым быстрым действием."],
-      ["Финальный дизайн","Собрала три состояния Навигатора, центр уведомлений и четыре сторис."],
+      ["Финальный дизайн","Собрала три состояния Навигатора, центр уведомлений и четыре информационных сторис."],
       ["Результаты","Посещаемость раздела выросла с 17% до 25%, а количество объявлений, созданных из Навигатора, достигло 41% всех точек создания."],
     ],
-    gallery: ["source/vmeste-old-nav.png","source/vmeste-layouts.png","source/vmeste-profile-layout.png","source/vmeste-notifications.png",{ type: "video", src: `${V}vmeste-navigation.mp4`, caption: "Навигатор Вместе.ру — видео проекта" },"source/vmeste-stories-collage.png","other-portrait-02-hq.png"]
+    gallery: ["source/vmeste-old-nav.png","vmeste-7d7d2baa6f042ebf.avif","source/vmeste-layouts.png","source/vmeste-profile-layout.png","source/vmeste-notifications.png",{ type: "video", src: `${V}vmeste-navigation-clean.mp4?v=2`, caption: "Навигатор Вместе.ру — видео проекта" },"source/vmeste-stories-collage.png","other-portrait-02-hq.png"]
   },
   "/investments": {
     title: "Инвестиции", subtitle: "Концепт мобильного приложения для управления инвестициями", meta: [["Продукт","Мобильное приложение"],["Направление","Финтех"]],
@@ -455,7 +465,7 @@ const cases = {
     intro: "Концепция раздела для выгодных покупок одежды, обуви, аксессуаров и винтажа.",
     sections: [],
     galleryLayout: "stack",
-    gallery: ["source/avito-fashion-frame-4.png","source/avito-fashion-frame-6.png","source/avito-fashion-frame-detail.png"]
+    gallery: ["source/avito-fashion-frame-4.png","source/avito-fashion-frame-detail.png","source/avito-fashion-frame-6.png"]
   },
   "/concept": {
     title: "Концепт", subtitle: "Концепция мобильного приложения", meta: [["Продукт","Мобильное приложение"],["Направление","Электронная коммерция"],["Платформа","iOS, Android"]],
@@ -479,10 +489,10 @@ const cases = {
       "trinity-02-hq.png",
       "trinity-03-hq.png",
       "trinity-04-hq.png",
-      "other-screen-hq.png",
-      "flight-concept-hq.png",
-      "other-portrait-01-hq.png",
-      { type: "video", src: `${V}TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4`, caption: "Концепт мобильного приложения" }
+      "mentory-main.avif",
+      "mentory-progress.avif",
+      { type: "video", src: `${V}TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4`, caption: "Концепт мобильного приложения" },
+      "flight-concept-hq.png"
     ]
   },
   "/step-app": {
@@ -529,6 +539,31 @@ function CasePage({ data }) {
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomPoint, setZoomPoint] = useState({ x: 0.5, y: 0.5 });
+  const swipeStartRef = useRef(null);
+  const suppressZoomRef = useRef(false);
+  const lightboxMediaRef = useRef(null);
+  const lightboxOriginRef = useRef(null);
+  useLayoutEffect(() => {
+    const gallery = document.querySelector(".case-gallery");
+    if (!gallery) return undefined;
+    const figures = [...gallery.querySelectorAll("figure")];
+    figures.forEach((figure) => {
+      figure.classList.add("gallery-reveal-ready");
+    });
+    if (!("IntersectionObserver" in window)) {
+      figures.forEach(figure => figure.classList.add("gallery-reveal-visible"));
+      return undefined;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("gallery-reveal-visible");
+        observer.unobserve(entry.target);
+      });
+    }, { root: null, threshold: 0, rootMargin: "0px" });
+    figures.forEach(figure => observer.observe(figure));
+    return () => observer.disconnect();
+  }, [data.title]);
   useEffect(() => {
     if (lightboxIndex === null) return;
     setIsZoomed(false);
@@ -571,8 +606,35 @@ function CasePage({ data }) {
     });
     return () => window.cancelAnimationFrame(frame);
   }, [isZoomed, zoomPoint, lightboxIndex]);
+  useLayoutEffect(() => {
+    if (lightboxIndex === null || !lightboxMediaRef.current || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      lightboxOriginRef.current = null;
+      return;
+    }
+    const media = lightboxMediaRef.current;
+    const target = media.getBoundingClientRect();
+    const origin = lightboxOriginRef.current;
+    lightboxOriginRef.current = null;
+    if (origin && target.width > 0 && target.height > 0) {
+      const deltaX = origin.left + origin.width / 2 - (target.left + target.width / 2);
+      const deltaY = origin.top + origin.height / 2 - (target.top + target.height / 2);
+      media.animate([
+        { opacity: 0.92, transform: `translate(${deltaX}px, ${deltaY}px) scale(${origin.width / target.width}, ${origin.height / target.height})` },
+        { opacity: 1, transform: "none" },
+      ], { duration: 520, easing: "cubic-bezier(.22,1,.36,1)" });
+      return;
+    }
+    media.animate([
+      { opacity: 0, transform: "translateY(6px) scale(.992)" },
+      { opacity: 1, transform: "none" },
+    ], { duration: 300, easing: "cubic-bezier(.22,1,.36,1)" });
+  }, [lightboxIndex]);
 
   const toggleImageZoom = (event) => {
+    if (suppressZoomRef.current) {
+      suppressZoomRef.current = false;
+      return;
+    }
     if (!isZoomed) {
       const rect = event.currentTarget.getBoundingClientRect();
       setZoomPoint({
@@ -583,6 +645,40 @@ function CasePage({ data }) {
     setIsZoomed(value => !value);
   };
 
+  const handleLightboxTouchStart = (event) => {
+    suppressZoomRef.current = false;
+    if (isZoomed || mediaItems.length < 2 || event.touches.length !== 1) {
+      swipeStartRef.current = null;
+      return;
+    }
+    const touch = event.touches[0];
+    swipeStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleLightboxTouchEnd = (event) => {
+    const start = swipeStartRef.current;
+    swipeStartRef.current = null;
+    if (!start || isZoomed || mediaItems.length < 2 || event.changedTouches.length !== 1) return;
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.15) return;
+    event.preventDefault();
+    suppressZoomRef.current = true;
+    setIsZoomed(false);
+    setLightboxIndex(index => deltaX < 0
+      ? (index + 1) % mediaItems.length
+      : (index - 1 + mediaItems.length) % mediaItems.length);
+    window.setTimeout(() => { suppressZoomRef.current = false; }, 350);
+  };
+
+  const openLightbox = (index, event) => {
+    const source = event.currentTarget.closest("figure") || event.currentTarget;
+    const rect = source.getBoundingClientRect();
+    lightboxOriginRef.current = { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+    setLightboxIndex(index);
+  };
+
   const renderImage = (item, i) => {
     const isVideo = typeof item === "object" && item.type === "video";
     const isVimeo = typeof item === "object" && item.type === "vimeo";
@@ -590,11 +686,11 @@ function CasePage({ data }) {
     const src = isMotion ? item.src : assetUrl(item);
     const isVmesteStories = !isMotion && item === "other-ba1a805d27423031.webp";
     const isPaddedConcept = !isMotion && data.title === "Другие проекты" && (item === "stoloto-hq.png" || item === "flight-concept-hq.png");
-    const backgroundColor = !isMotion ? galleryBackgrounds[item] : undefined;
+    const backgroundColor = !isMotion ? (data.title === "Манжерок" ? "#1b1b1b" : galleryBackgrounds[item]) : undefined;
     const caption = isMotion ? item.caption || `${data.title} — видео проекта` : galleryCaptions[item] || `${data.title} — экран проекта`;
     return <figure className={`${isVimeo ? "gallery-vimeo-card " : ""}${isVmesteStories ? "vmeste-stories-card " : ""}${isPaddedConcept ? "padded-concept-card" : ""}`.trim() || undefined} key={src} style={backgroundColor ? { backgroundColor } : undefined}>{isVimeo
-      ? <><LazyVimeo src={src} title={caption}/><button className="gallery-vimeo-open" type="button" onClick={() => setLightboxIndex(mediaItems.indexOf(src))} aria-label={`${caption}. Открыть на весь экран`}><span>{caption}</span></button></>
-      : <button className={`gallery-image-button${isVideo ? " is-video" : ""}`} type="button" onClick={() => setLightboxIndex(mediaItems.indexOf(src))} aria-label={`${caption}. Открыть на весь экран`}>{isVideo
+      ? <><LazyVimeo src={src} title={caption}/><button className="gallery-vimeo-open" type="button" onClick={(event) => openLightbox(mediaItems.indexOf(src), event)} aria-label={`${caption}. Открыть на весь экран`}><span>{caption}</span></button></>
+      : <button className={`gallery-image-button${isVideo ? " is-video" : ""}`} type="button" onClick={(event) => openLightbox(mediaItems.indexOf(src), event)} aria-label={`${caption}. Открыть на весь экран`}>{isVideo
         ? <LazyVideo src={src} autoPlay muted loop playsInline/>
         : <img src={src} alt="" loading={mediaEntries.indexOf(item) > 1 ? "lazy" : "eager"} fetchPriority={mediaEntries.indexOf(item) === 0 ? "high" : "auto"} decoding="async"/>
       }<span>{caption}</span></button>}</figure>;
@@ -612,14 +708,15 @@ function CasePage({ data }) {
   const lightboxCaption = lightboxIsMotion ? lightboxEntry.caption || `${data.title} — видео проекта` : galleryCaptions[lightboxEntry] || `${data.title} — экран проекта`;
   const lightboxDimensions = galleryDimensions[lightboxEntry];
   const usesUnifiedCorners = ["Вместе.ру", "Манжерок", "Другие проекты"].includes(data.title);
-  const lightboxBackground = !lightboxIsMotion ? galleryBackgrounds[lightboxEntry] : undefined;
+  const lightboxBackground = !lightboxIsMotion ? (data.title === "Манжерок" ? "#1b1b1b" : galleryBackgrounds[lightboxEntry]) : undefined;
+  const lightboxIsSkiOnDarkBackground = data.title === "Манжерок" && !lightboxIsMotion;
   const lightboxMedia = lightboxIsVimeo
-    ? <div className="lightbox-vimeo-frame"><iframe src={mediaItems[lightboxIndex]} title={lightboxCaption} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen/></div>
+    ? <div key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={`lightbox-vimeo-frame${lightboxIsVmeste ? " lightbox-vmeste-video" : ""}`}><iframe src={mediaItems[lightboxIndex]} title={lightboxCaption} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen/></div>
     : lightboxIsVideo
-      ? <video key={mediaItems[lightboxIndex]} src={mediaItems[lightboxIndex]} autoPlay muted loop playsInline disablePictureInPicture disableRemotePlayback/>
-      : <img className={`${isZoomed ? "lightbox-zoomed " : ""}${usesUnifiedCorners ? "lightbox-uniform " : ""}${lightboxIsVmeste ? "lightbox-vmeste " : ""}${lightboxIsVmesteStories ? "lightbox-stories " : ""}${lightboxIsPaddedConcept ? "lightbox-padded-concept" : ""}`.trim()} style={lightboxBackground ? { backgroundColor: lightboxBackground, "--media-background": lightboxBackground } : undefined} src={mediaItems[lightboxIndex]} width={lightboxDimensions?.[0]} height={lightboxDimensions?.[1]} alt="" role="button" tabIndex={0} aria-label={isZoomed ? "Уменьшить изображение" : "Увеличить изображение"} onClick={toggleImageZoom} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggleImageZoom(event); } }} onLoad={(event) => event.currentTarget.classList.toggle("lightbox-tall", event.currentTarget.naturalHeight > event.currentTarget.naturalWidth)}/>;
+      ? <video key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={lightboxIsVmeste ? "lightbox-vmeste-video" : undefined} src={mediaItems[lightboxIndex]} autoPlay muted loop playsInline disablePictureInPicture disableRemotePlayback/>
+      : <img key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={`${isZoomed ? "lightbox-zoomed " : ""}${usesUnifiedCorners ? "lightbox-uniform " : ""}${lightboxIsVmeste ? "lightbox-vmeste " : ""}${lightboxIsVmesteStories ? "lightbox-stories " : ""}${lightboxIsPaddedConcept ? "lightbox-padded-concept " : ""}${lightboxIsSkiOnDarkBackground ? "lightbox-ski-dark" : ""}`.trim()} style={lightboxBackground ? { backgroundColor: lightboxBackground, "--media-background": lightboxBackground } : undefined} src={mediaItems[lightboxIndex]} width={lightboxDimensions?.[0]} height={lightboxDimensions?.[1]} alt="" role="button" tabIndex={0} aria-label={isZoomed ? "Уменьшить изображение" : "Увеличить изображение"} onClick={toggleImageZoom} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggleImageZoom(event); } }} onLoad={(event) => event.currentTarget.classList.toggle("lightbox-tall", event.currentTarget.naturalHeight > event.currentTarget.naturalWidth)}/>;
   const visibleSections = data.sections.filter(([title]) => !(data.hideSections || []).includes(title));
-  return <><MobileSwitch mode="project"/><main className="case-shell"><section className="case-info" id="project-info"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><header className={hasProjectCta ? "has-cta" : "no-cta"}><h1>{data.title}</h1><p>{data.subtitle}</p>{hasProjectCta && <Link href="https://t.me/myautau" className="light-button case-cta">Обсудить проект</Link>}</header><div className="case-meta">{data.meta.filter(([k]) => k !== "Продукт").map(([k,v])=><p key={k}><span>{k}</span><b>{v}</b></p>)}</div><p className={`case-intro${visibleSections.length === 0 ? " case-intro-last" : ""}`}>{data.intro}</p>{visibleSections.map(([title,text])=><article className={`case-text${title === "О задаче" ? " case-task" : ""}`} key={title} id={title.toLowerCase().replaceAll(" ","-")}><h2>{title}</h2><p>{text}</p></article>)}<Link href="/" className="text-link">Все проекты <ArrowUpRight size={16}/></Link></section><section className={`case-gallery${usesUnifiedCorners ? " uniform-media-gallery" : ""}${data.title === "Вместе.ру" ? " vmeste-gallery" : ""}${data.gallery.length === 1 ? " single-media" : ""}${data.galleryLayout === "stack" ? " stack-media" : ""}`} id="gallery"><div className="gallery-desktop"><div>{leftGallery.map(renderImage)}</div><div>{rightGallery.map(renderImage)}</div></div><div className="gallery-mobile">{data.gallery.map(renderImage)}</div></section></main>{lightboxIndex !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Просмотр материалов проекта"><div className={`lightbox-scroll${isZoomed ? " zoomed" : ""}`} onClick={(event) => event.target === event.currentTarget && setLightboxIndex(null)}>{lightboxMedia}</div><span className="lightbox-caption">{lightboxCaption}</span><button className="lightbox-close" type="button" onClick={() => setLightboxIndex(null)}>Закрыть</button>{mediaItems.length > 1 && <><button className="lightbox-arrow lightbox-prev" type="button" onClick={() => setLightboxIndex(index => (index - 1 + mediaItems.length) % mediaItems.length)} aria-label="Предыдущий материал"><ChevronLeft aria-hidden="true"/></button><button className="lightbox-arrow lightbox-next" type="button" onClick={() => setLightboxIndex(index => (index + 1) % mediaItems.length)} aria-label="Следующий материал"><ChevronRight aria-hidden="true"/></button><span className="lightbox-count">{lightboxIndex + 1} / {mediaItems.length}</span></>}</div>}</>;
+  return <><MobileSwitch mode="project"/><main className="case-shell"><section className="case-info" id="project-info"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><header className={hasProjectCta ? "has-cta" : "no-cta"}><h1>{data.title}</h1><p>{data.subtitle}</p>{hasProjectCta && <Link href="https://t.me/myautau" className="light-button case-cta">Обсудить проект</Link>}</header><div className="case-meta">{data.meta.filter(([k]) => k !== "Продукт").map(([k,v])=><p key={k}><span>{k}</span><b>{v}</b></p>)}</div><p className={`case-intro${visibleSections.length === 0 ? " case-intro-last" : ""}`}>{data.intro}</p>{visibleSections.map(([title,text])=><article className={`case-text${title === "О задаче" ? " case-task" : ""}`} key={title} id={title.toLowerCase().replaceAll(" ","-")}><h2>{title}</h2><p>{text}</p></article>)}<Link href="/" className="text-link">Все проекты <ArrowUpRight size={16}/></Link></section><section className={`case-gallery${usesUnifiedCorners ? " uniform-media-gallery" : ""}${data.title === "Вместе.ру" ? " vmeste-gallery" : ""}${data.title === "Манжерок" ? " ski-gallery" : ""}${data.gallery.length === 1 ? " single-media" : ""}${data.galleryLayout === "stack" ? " stack-media" : ""}`} id="gallery"><div className="gallery-desktop"><div>{leftGallery.map(renderImage)}</div><div>{rightGallery.map(renderImage)}</div></div><div className="gallery-mobile">{data.gallery.map(renderImage)}</div></section></main>{lightboxIndex !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Просмотр материалов проекта"><div className={`lightbox-scroll${isZoomed ? " zoomed" : ""}`} onClick={(event) => event.target === event.currentTarget && setLightboxIndex(null)} onTouchStart={handleLightboxTouchStart} onTouchEnd={handleLightboxTouchEnd} onTouchCancel={() => { swipeStartRef.current = null; }}>{lightboxMedia}</div><span className="lightbox-caption">{lightboxCaption}</span><button className="lightbox-close" type="button" onClick={() => setLightboxIndex(null)}>Закрыть</button>{mediaItems.length > 1 && <><button className="lightbox-arrow lightbox-prev" type="button" onClick={() => setLightboxIndex(index => (index - 1 + mediaItems.length) % mediaItems.length)} aria-label="Предыдущий материал"><ChevronLeft aria-hidden="true"/></button><button className="lightbox-arrow lightbox-next" type="button" onClick={() => setLightboxIndex(index => (index + 1) % mediaItems.length)} aria-label="Следующий материал"><ChevronRight aria-hidden="true"/></button><span className="lightbox-count">{lightboxIndex + 1} / {mediaItems.length}</span></>}</div>}</>;
 }
 
 function ResumePage() {
