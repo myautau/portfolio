@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowUp, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { siClaude } from "simple-icons";
 import { chatgptDarkIcon } from "./toolIconData";
@@ -17,27 +17,46 @@ const stripBasePath = pathname => {
   }
   return normalized;
 };
-const assetUrl = name => `${A}${name.replace(/\.(?:png|jpe?g)$/i, ".webp")}`;
+const assetUrl = name => name.startsWith("source/") ? `${A}${name.slice("source/".length)}` : `${A}${name.replace(/\.(?:png|jpe?g)$/i, ".webp")}`;
 
 const shortRussianWords = "а|без|в|во|до|за|и|из|к|ко|на|над|не|но|о|об|обо|от|по|под|при|про|с|со|у";
 const hangingWordPattern = new RegExp(`(?<![\\p{L}\\p{N}])(${shortRussianWords})[ \\t]+(?=[\\p{L}\\p{N}])`, "giu");
+const typographicText = value => value
+  .replace(hangingWordPattern, "$1\u00a0")
+  .replace(/[ \u00a0]*—[ \u00a0]*/g, "\u00a0—\u00a0")
+  .replace(/(\d)[ \u00a0](?=\d{3}(?:\D|$))/g, "$1\u00a0");
+
+function applyTypography(root) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      return node.parentElement?.closest("script, style, code, pre, .no-typography")
+        ? NodeFilter.FILTER_REJECT
+        : NodeFilter.FILTER_ACCEPT;
+    },
+  });
+  let node;
+  while ((node = walker.nextNode())) {
+    const nextValue = typographicText(node.nodeValue);
+    if (nextValue !== node.nodeValue) node.nodeValue = nextValue;
+  }
+}
 
 function TypographyFix() {
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.body;
-
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-      acceptNode(node) {
-        return node.parentElement?.closest("script, style, code, pre, .no-typography")
-          ? NodeFilter.FILTER_REJECT
-          : NodeFilter.FILTER_ACCEPT;
-      },
+    applyTypography(root);
+    const observer = new MutationObserver(records => {
+      records.forEach(record => record.addedNodes.forEach(node => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const nextValue = typographicText(node.nodeValue);
+          if (nextValue !== node.nodeValue) node.nodeValue = nextValue;
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          applyTypography(node);
+        }
+      }));
     });
-
-    let node;
-    while ((node = walker.nextNode())) {
-      node.nodeValue = node.nodeValue.replace(hangingWordPattern, "$1\u00a0");
-    }
+    observer.observe(root, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, []);
 
   return null;
@@ -86,6 +105,20 @@ function LazyVideo({ src, autoPlay = true, ...props }) {
   return <video ref={ref} src={ready ? src : undefined} autoPlay={autoPlay} preload="none" disablePictureInPicture disableRemotePlayback {...props}/>;
 }
 
+function LazyVimeo({ src, title }) {
+  const ref = useRef(null);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (!("IntersectionObserver" in window)) { setReady(true); return; }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setReady(true); observer.disconnect(); }
+    }, { rootMargin: "400px" });
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+  return <div ref={ref} className="gallery-vimeo-frame">{ready && <iframe src={src} title={title} loading="lazy" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen/>}</div>;
+}
+
 function BrandIcon({ icon, variant }) {
   const mark = typeof icon === "string"
     ? <img src={icon} alt=""/>
@@ -126,7 +159,7 @@ const asHypothesisCard = project => {
   if (!hypothesisMockups[project.href]) return project;
   const card = { ...project, ...hypothesisMockups[project.href], video: undefined, ratio: "1 / 1", mockup: true, fit: undefined, imageClass: undefined };
   return project.href === "/concept"
-    ? { ...card, title: "Другие работы и концепты", kind: "Разные концепты для мобилки и веба", href: "/other-projects" }
+    ? { ...card, title: "Другие проекты", kind: "", href: "/other-projects" }
     : card;
 };
 
@@ -136,12 +169,12 @@ const hypothesisLeft = ["/ama", "/vmeste", "/avito-fashion"].map(hypothesisCard)
 const hypothesisRight = ["/ski-resort", "/investments", "/concept"].map(hypothesisCard);
 
 const jobs = [
-  ["Продуктовый дизайнер", "MateÇa", "с 2024", "Мобильные приложения, сайты и внутренние B2B-системы — от идеи и исследований до передачи в разработку."],
-  ["Продуктовый дизайнер", "Вместе.ру (Самолет)", "2023", "Редизайн навигатора, продуктовые функции, сторис и материалы для магазинов приложений."],
-  ["Ревьюер", "Яндекс Практикум", "2022 — 2023", "Ревью работ студентов и рекомендации по улучшению интерфейсов и дизайнерских кейсов."],
-  ["UI/UX дизайнер", "Trinity Monsters", "2021 — 2022", "Web3-продукты, банковские интерфейсы, сервисы для Столото и корпоративные порталы."],
-  ["UI/UX дизайнер, стажировка", "AIC", "2021", "Исследование и концепция мобильного приложения для Ашана."],
-  ["Веб-дизайнер", "Схема", "2019 — 2021", "Лендинги, письма и коммуникационный дизайн для Яндекса, X5 Retail, ВДНХ и других компаний."],
+  ["Продуктовый дизайнер", "MateÇa", "с 2024", "Мобильные приложения, сайты и внутренние B2B-системы для сервисных, инвестиционных и корпоративных продуктов."],
+  ["Продуктовый дизайнер", "Вместе.ру (Самолет)", "2023", "Редизайн ключевых сценариев приложения, новые продуктовые функции и интерфейсы внутренней B2B-платформы."],
+  ["Ревьюер", "Яндекс Практикум", "2022 — 2023", "Ревью работ студентов курса «Дизайн интерфейсов» и рекомендации по улучшению продуктовых кейсов."],
+  ["UI/UX дизайнер", "Trinity Monsters", "2021 — 2022", "Мобильные приложения, веб-сервисы и корпоративные системы для Web3, финтеха и крупных компаний."],
+  ["UI/UX дизайнер, стажировка", "AIC", "2021", "Мобильное приложение Ашана: исследование пользовательского опыта и разработка продуктовой концепции."],
+  ["Веб-дизайнер", "Схема", "2019 — 2021", "Лендинги, email-коммуникации и digital-материалы для Яндекса, X5 Retail, ВДНХ и других компаний."],
 ];
 
 const companyLogos = [
@@ -176,6 +209,7 @@ const galleryCaptions = {
   "ski-hand-interface-new.png": "Главный экран приложения",
   "ski-a6951fee0dc0d8da.avif": "Главная, услуги и персональные предложения",
   "ski-4e5ac801adcc97b3.avif": "Экран информации об отеле",
+  "source/manzherok-hotel-detail.png": "Экран информации об отеле",
   "ski-ebd18ef95ae2da98.avif": "Выбор отеля, номера и тарифа",
   "ski-eb839b4dfdf80618.avif": "Оформление бронирования и QR-билет",
   "ski-06-hq.png": "Поиск объектов и построение маршрута",
@@ -191,18 +225,27 @@ const galleryCaptions = {
   "vmeste-65f1e8d4f0648310.avif": "Навигатор и центр уведомлений",
   "other-portrait-02-hq.png": "Объявления и соседские сценарии Вместе.ру",
   "other-ba1a805d27423031.webp": "Сторис о новых функциях приложения",
-  "trinity-01-hq.png": "Описание вакансии в формате диалога",
-  "trinity-02-hq.png": "Форма отклика на вакансию",
-  "trinity-03-hq.png": "Знакомство с командой и условиями работы",
-  "trinity-04-hq.png": "Выбор вакансии и начало сценария",
-  "step-app-01-hq.png": "Главная, инвентарь, тренировка и результаты",
-  "step-app-02-hq.png": "Маркетплейс, кошелёк и профиль",
-  "stoloto-hq.png": "Сканирование и массовая проверка билетов",
+  "source/vmeste-old-nav.png": "Карта разделов и функций Навигатора",
+  "source/vmeste-layouts.png": "Навигатор и основные сервисы",
+  "source/vmeste-stories-collage.png": "Сторис о новых функциях приложения",
+  "source/vmeste-profile-layout.png": "Переключение профилей жителя и бизнеса",
+  "source/vmeste-notifications.png": "Навигатор и центр уведомлений",
+  "trinity-01-hq.png": "Сайт Trinity Monsters — описание вакансии в формате диалога",
+  "trinity-02-hq.png": "Сайт Trinity Monsters — форма отклика на вакансию",
+  "trinity-03-hq.png": "Сайт Trinity Monsters — знакомство с командой и условиями работы",
+  "trinity-04-hq.png": "Сайт Trinity Monsters — выбор вакансии и начало сценария",
+  "step-app-01-hq.png": "Step App — главная, инвентарь, тренировка и результаты",
+  "step-app-02-hq.png": "Step App — Десктоп — Маркетплейс, кошелёк и профиль",
+  "stoloto-hq.png": "Столото — сканирование и массовая проверка билетов",
+  "source/investments-sail.png": "Инвестиции — экраны",
   "avito-fashion-hq.png": "Каталог, карточка товара и оформление покупки",
   "avito-fashion-block-01.png": "Каталог, подборки и рекомендации Avito Fashion",
   "avito-fashion-block-02.png": "Карточка товара, подбор образа и поиск",
   "avito-fashion-block-01-dark.png": "Каталог, подборки и рекомендации Avito Fashion",
   "avito-fashion-block-02-dark.png": "Карточка товара, подбор образа и поиск",
+  "source/avito-fashion-frame-4.png": "Главная Avito Fashion: категории, AI-подбор образа и выбор инфлюенсеров",
+  "source/avito-fashion-frame-6.png": "Избранные бренды и сезонные рекомендации",
+  "source/avito-fashion-frame-detail.png": "Карточка товара, подбор образа и поиск по разделам",
   "flight-concept-hq.png": "Маршрут рейса в светлой, синей и тёмной темах",
   "other-screen-hq.png": "Главная и каталог образовательной Web3-платформы",
   "other-portrait-01-hq.png": "Дашборд показателей и сценариев продукта",
@@ -214,22 +257,22 @@ const galleryDimensions = {
 };
 
 const galleryBackgrounds = {
-  "ski-a6951fee0dc0d8da.avif": "#fff",
-  "ski-4e5ac801adcc97b3.avif": "#fff",
-  "ski-ebd18ef95ae2da98.avif": "#fff",
-  "ski-eb839b4dfdf80618.avif": "#fff",
-  "ski-06-hq.png": "#fff",
-  "ski-07-hq.png": "#fff",
-  "ski-151861387452668e.avif": "#fff",
-  "ski-stores.png": "#fff",
+  "ski-a6951fee0dc0d8da.avif": "#1b1b1b",
+  "ski-4e5ac801adcc97b3.avif": "#1b1b1b",
+  "ski-ebd18ef95ae2da98.avif": "#1b1b1b",
+  "ski-eb839b4dfdf80618.avif": "#1b1b1b",
+  "ski-06-hq.png": "#1b1b1b",
+  "ski-07-hq.png": "#1b1b1b",
+  "ski-151861387452668e.avif": "#1b1b1b",
+  "ski-stores.png": "#1b1b1b",
   "step-app-01-hq.png": "#fad649",
   "step-app-02-hq.png": "#fad649",
-  "stoloto-hq.png": "#f8f8f8",
+  "stoloto-hq.png": "#1b1b1b",
   "trinity-01-hq.png": "#c8ff00",
   "trinity-02-hq.png": "#c8ff00",
   "trinity-03-hq.png": "#c8ff00",
   "trinity-04-hq.png": "#c8ff00",
-  "flight-concept-hq.png": "#fff",
+  "flight-concept-hq.png": "#1b1b1b",
   "other-screen-hq.png": "#000",
   "other-portrait-01-hq.png": "#000",
   "other-portrait-02-hq.png": "#fef6f2",
@@ -256,7 +299,7 @@ function ProjectCard({ project, priority = false }) {
 
 function MobileSwitch({ mode = "home" }) {
   const [active, setActive] = useState("first");
-  const first = mode === "home" ? ["Обо мне", "#intro"] : ["Инфо", "#project-info"];
+  const first = mode === "home" ? ["Обо мне", "#intro"] : ["О задаче", "#project-info"];
   const second = mode === "home" ? ["Работы", "#work"] : ["Галерея", "#gallery"];
   useEffect(() => {
     const target = document.querySelector(second[1]);
@@ -351,7 +394,7 @@ const cases = {
       "ski-f0077e8e46537e02.avif",
       { type: "video", src: `${V}ls1FrvqnYmzT7Z7QrqCSwI1WANY.mp4`, caption: "Все разделы главной страницы: бронирование, меню, отели и шале, афиша, развлечения, рестораны и бары" },
       "ski-a6951fee0dc0d8da.avif",
-      "ski-4e5ac801adcc97b3.avif",
+      "source/manzherok-hotel-detail.png",
       "ski-ebd18ef95ae2da98.avif",
       "ski-eb839b4dfdf80618.avif",
       { type: "video", src: `${V}9zLzrZKGw9fUPqGKrnHkPG2Mny4.mp4`, caption: "Выбор канатной дороги на карте и переход к её карточке" },
@@ -374,13 +417,14 @@ const cases = {
       ["Финальный дизайн","Собрала три состояния Навигатора, центр уведомлений и четыре сторис."],
       ["Результаты","Посещаемость раздела выросла с 17% до 25%, а количество объявлений, созданных из Навигатора, достигло 41% всех точек создания."],
     ],
-    gallery: ["vmeste-01-hq.png","vmeste-7d7d2baa6f042ebf.avif","vmeste-final-1.png","vmeste-c2e5b4da20d62cee.avif","vmeste-65f1e8d4f0648310.avif",{ type: "video", src: `${V}vmeste-navigation.mp4` },"other-ba1a805d27423031.webp","other-portrait-02-hq.png"]
+    gallery: ["source/vmeste-old-nav.png","source/vmeste-layouts.png","source/vmeste-profile-layout.png","source/vmeste-notifications.png",{ type: "video", src: `${V}vmeste-navigation.mp4`, caption: "Навигатор Вместе.ру — видео проекта" },"source/vmeste-stories-collage.png","other-portrait-02-hq.png"]
   },
   "/investments": {
-    title: "Инвестиции", subtitle: "Концепт мобильного приложения для управления инвестициями", meta: [["Продукт","Мобильное приложение"],["Направление","Fintech"],["Платформа","iOS"]],
+    title: "Инвестиции", subtitle: "Концепт мобильного приложения для управления инвестициями", meta: [["Продукт","Мобильное приложение"],["Направление","Fintech"]],
     intro: "Концепт мобильного приложения для управления портфелем: динамика активов, структура вложений и ключевые показатели в одном сценарии.",
     sections: [],
-    gallery: [{ type: "video", src: `${V}investments-hq.mp4` }]
+    galleryLayout: "stack",
+    gallery: [{ type: "video", src: `${V}investments-hq.mp4` },"source/investments-sail.png"]
   },
   "/trinity-monsters": {
     title: "Trinity Monsters", subtitle: "Концепт раздела вакансий в эстетике Windows 98", meta: [["Продукт","Раздел вакансий"],["Направление","HR"],["Платформа","Web"]],
@@ -389,11 +433,11 @@ const cases = {
     gallery: ["trinity-01-hq.png","trinity-02-hq.png","trinity-03-hq.png","trinity-04-hq.png"]
   },
   "/avito-fashion": {
-    title: "Avito Fashion", subtitle: "Концепция fashion-вертикали внутри Avito", meta: [["Продукт","Раздел маркетплейса"],["Направление","Fashion, e-commerce"],["Платформа","iOS, Android"]],
+    title: "Avito Fashion", subtitle: "Концепция fashion-вертикали внутри Avito", meta: [["Продукт","Раздел маркетплейса"],["Направление","Marketplace"]],
     intro: "Концепция раздела для выгодных покупок одежды, обуви, аксессуаров и винтажа.",
     sections: [],
     galleryLayout: "stack",
-    gallery: ["avito-fashion-block-01-dark.png","avito-fashion-block-02-dark.png"]
+    gallery: ["source/avito-fashion-frame-4.png","source/avito-fashion-frame-6.png","source/avito-fashion-frame-detail.png"]
   },
   "/concept": {
     title: "Концепт", subtitle: "Концепция мобильного приложения", meta: [["Продукт","Мобильное приложение"],["Направление","E-commerce"],["Платформа","iOS, Android"]],
@@ -405,8 +449,8 @@ const cases = {
     ]
   },
   "/other-projects": {
-    title: "Другие работы и концепты", subtitle: "Разные концепты для мобилки и веба", meta: [["Направление","Digital concepts"],["Платформа","iOS, Android, Web"]],
-    intro: "Подборка мобильных и веб-концептов.",
+    title: "Другие работы и концепты", subtitle: "", meta: [["Платформа","iOS, Android, Web"]],
+    intro: "Реализованные проекты и концепты — мобильные приложения и сайты.",
     sections: [],
     gallery: [
       { type: "video", src: `${V}HRukF4ca0a0qfNKqktNqpjFcoL4.mp4`, caption: "Концепт мобильного приложения" },
@@ -417,10 +461,10 @@ const cases = {
       "trinity-02-hq.png",
       "trinity-03-hq.png",
       "trinity-04-hq.png",
-      "flight-concept-hq.png",
       "other-screen-hq.png",
-      { type: "video", src: `${V}TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4`, caption: "Концепт мобильного приложения" },
-      "other-portrait-01-hq.png"
+      "flight-concept-hq.png",
+      "other-portrait-01-hq.png",
+      { type: "video", src: `${V}TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4`, caption: "Концепт мобильного приложения" }
     ]
   },
   "/step-app": {
@@ -463,7 +507,7 @@ const cases = {
 
 function CasePage({ data }) {
   const mediaEntries = data.gallery;
-  const mediaItems = mediaEntries.map(item => typeof item === "object" && item.type === "video" ? item.src : assetUrl(item));
+  const mediaItems = mediaEntries.map(item => typeof item === "object" && (item.type === "video" || item.type === "vimeo") ? item.src : assetUrl(item));
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomPoint, setZoomPoint] = useState({ x: 0.5, y: 0.5 });
@@ -523,28 +567,41 @@ function CasePage({ data }) {
 
   const renderImage = (item, i) => {
     const isVideo = typeof item === "object" && item.type === "video";
-    const src = isVideo ? item.src : assetUrl(item);
-    const isVmesteStories = !isVideo && item === "other-ba1a805d27423031.webp";
-    const backgroundColor = !isVideo ? galleryBackgrounds[item] : undefined;
-    const caption = isVideo ? item.caption || `${data.title} — видео проекта` : galleryCaptions[item] || `${data.title} — экран проекта`;
-    return <figure className={isVmesteStories ? "vmeste-stories-card" : undefined} key={src} style={backgroundColor ? { backgroundColor } : undefined}><button className={`gallery-image-button${isVideo ? " is-video" : ""}`} type="button" onClick={() => setLightboxIndex(mediaItems.indexOf(src))} aria-label={`${caption}. Открыть на весь экран`}>{isVideo
-      ? <LazyVideo src={src} autoPlay muted loop playsInline/>
-      : <img src={src} alt="" loading={mediaEntries.indexOf(item) > 1 ? "lazy" : "eager"} fetchPriority={mediaEntries.indexOf(item) === 0 ? "high" : "auto"} decoding="async"/>
-    }<span>{caption}</span></button></figure>;
+    const isVimeo = typeof item === "object" && item.type === "vimeo";
+    const isMotion = isVideo || isVimeo;
+    const src = isMotion ? item.src : assetUrl(item);
+    const isVmesteStories = !isMotion && item === "other-ba1a805d27423031.webp";
+    const isPaddedConcept = !isMotion && data.title === "Другие работы и концепты" && (item === "stoloto-hq.png" || item === "flight-concept-hq.png");
+    const backgroundColor = !isMotion ? galleryBackgrounds[item] : undefined;
+    const caption = isMotion ? item.caption || `${data.title} — видео проекта` : galleryCaptions[item] || `${data.title} — экран проекта`;
+    return <figure className={`${isVimeo ? "gallery-vimeo-card " : ""}${isVmesteStories ? "vmeste-stories-card " : ""}${isPaddedConcept ? "padded-concept-card" : ""}`.trim() || undefined} key={src} style={backgroundColor ? { backgroundColor } : undefined}>{isVimeo
+      ? <><LazyVimeo src={src} title={caption}/><button className="gallery-vimeo-open" type="button" onClick={() => setLightboxIndex(mediaItems.indexOf(src))} aria-label={`${caption}. Открыть на весь экран`}><span>{caption}</span></button></>
+      : <button className={`gallery-image-button${isVideo ? " is-video" : ""}`} type="button" onClick={() => setLightboxIndex(mediaItems.indexOf(src))} aria-label={`${caption}. Открыть на весь экран`}>{isVideo
+        ? <LazyVideo src={src} autoPlay muted loop playsInline/>
+        : <img src={src} alt="" loading={mediaEntries.indexOf(item) > 1 ? "lazy" : "eager"} fetchPriority={mediaEntries.indexOf(item) === 0 ? "high" : "auto"} decoding="async"/>
+      }<span>{caption}</span></button>}</figure>;
   };
   const leftGallery = data.gallery.filter((_, i) => i % 2 === 0);
   const rightGallery = data.gallery.filter((_, i) => i % 2 === 1);
   const hasProjectCta = false;
   const lightboxEntry = lightboxIndex === null ? null : mediaEntries[lightboxIndex];
   const lightboxIsVideo = Boolean(lightboxEntry && typeof lightboxEntry === "object" && lightboxEntry.type === "video");
+  const lightboxIsVimeo = Boolean(lightboxEntry && typeof lightboxEntry === "object" && lightboxEntry.type === "vimeo");
+  const lightboxIsMotion = lightboxIsVideo || lightboxIsVimeo;
   const lightboxIsVmeste = data.title === "Вместе.ру";
   const lightboxIsVmesteStories = lightboxEntry === "other-ba1a805d27423031.webp";
-  const lightboxCaption = lightboxIsVideo ? lightboxEntry.caption || `${data.title} — видео проекта` : galleryCaptions[lightboxEntry] || `${data.title} — экран проекта`;
+  const lightboxIsPaddedConcept = data.title === "Другие работы и концепты" && (lightboxEntry === "stoloto-hq.png" || lightboxEntry === "flight-concept-hq.png");
+  const lightboxCaption = lightboxIsMotion ? lightboxEntry.caption || `${data.title} — видео проекта` : galleryCaptions[lightboxEntry] || `${data.title} — экран проекта`;
   const lightboxDimensions = galleryDimensions[lightboxEntry];
   const usesUnifiedCorners = ["Вместе.ру", "Манжерок", "Другие работы и концепты"].includes(data.title);
-  const lightboxBackground = !lightboxIsVideo ? galleryBackgrounds[lightboxEntry] : undefined;
+  const lightboxBackground = !lightboxIsMotion ? galleryBackgrounds[lightboxEntry] : undefined;
+  const lightboxMedia = lightboxIsVimeo
+    ? <div className="lightbox-vimeo-frame"><iframe src={mediaItems[lightboxIndex]} title={lightboxCaption} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen/></div>
+    : lightboxIsVideo
+      ? <video key={mediaItems[lightboxIndex]} src={mediaItems[lightboxIndex]} autoPlay muted loop playsInline disablePictureInPicture disableRemotePlayback/>
+      : <img className={`${isZoomed ? "lightbox-zoomed " : ""}${usesUnifiedCorners ? "lightbox-uniform " : ""}${lightboxIsVmeste ? "lightbox-vmeste " : ""}${lightboxIsVmesteStories ? "lightbox-stories " : ""}${lightboxIsPaddedConcept ? "lightbox-padded-concept" : ""}`.trim()} style={lightboxBackground ? { backgroundColor: lightboxBackground, "--media-background": lightboxBackground } : undefined} src={mediaItems[lightboxIndex]} width={lightboxDimensions?.[0]} height={lightboxDimensions?.[1]} alt="" role="button" tabIndex={0} aria-label={isZoomed ? "Уменьшить изображение" : "Увеличить изображение"} onClick={toggleImageZoom} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggleImageZoom(event); } }} onLoad={(event) => event.currentTarget.classList.toggle("lightbox-tall", event.currentTarget.naturalHeight > event.currentTarget.naturalWidth)}/>;
   const visibleSections = data.sections.filter(([title]) => !(data.hideSections || []).includes(title));
-  return <><MobileSwitch mode="project"/><main className="case-shell"><section className="case-info" id="project-info"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><header className={hasProjectCta ? "has-cta" : "no-cta"}><h1>{data.title}</h1><p>{data.subtitle}</p>{hasProjectCta && <Link href="https://t.me/myautau" className="light-button case-cta">Обсудить проект</Link>}</header><div className="case-meta">{data.meta.filter(([k]) => k !== "Продукт").map(([k,v])=><p key={k}><span>{k}</span><b>{v}</b></p>)}</div><p className={`case-intro${visibleSections.length === 0 ? " case-intro-last" : ""}`}>{data.intro}</p>{visibleSections.map(([title,text])=><article className={`case-text${title === "О задаче" ? " case-task" : ""}`} key={title} id={title.toLowerCase().replaceAll(" ","-")}><h2>{title}</h2><p>{text}</p></article>)}<Link href="/" className="text-link">Все проекты <ArrowUpRight size={16}/></Link></section><section className={`case-gallery${usesUnifiedCorners ? " uniform-media-gallery" : ""}${data.title === "Вместе.ру" ? " vmeste-gallery" : ""}${data.gallery.length === 1 ? " single-media" : ""}${data.galleryLayout === "stack" ? " stack-media" : ""}`} id="gallery"><div className="gallery-desktop"><div>{leftGallery.map(renderImage)}</div><div>{rightGallery.map(renderImage)}</div></div><div className="gallery-mobile">{data.gallery.map(renderImage)}</div></section></main>{lightboxIndex !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Просмотр материалов проекта"><div className={`lightbox-scroll${isZoomed ? " zoomed" : ""}`} onClick={(event) => event.target === event.currentTarget && setLightboxIndex(null)}>{lightboxIsVideo ? <video key={mediaItems[lightboxIndex]} src={mediaItems[lightboxIndex]} autoPlay muted loop playsInline disablePictureInPicture disableRemotePlayback/> : <img className={`${isZoomed ? "lightbox-zoomed " : ""}${usesUnifiedCorners ? "lightbox-uniform " : ""}${lightboxIsVmeste ? "lightbox-vmeste " : ""}${lightboxIsVmesteStories ? "lightbox-stories" : ""}`.trim()} style={lightboxBackground ? { backgroundColor: lightboxBackground, "--media-background": lightboxBackground } : undefined} src={mediaItems[lightboxIndex]} width={lightboxDimensions?.[0]} height={lightboxDimensions?.[1]} alt="" role="button" tabIndex={0} aria-label={isZoomed ? "Уменьшить изображение" : "Увеличить изображение"} onClick={toggleImageZoom} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggleImageZoom(event); } }} onLoad={(event) => event.currentTarget.classList.toggle("lightbox-tall", event.currentTarget.naturalHeight > event.currentTarget.naturalWidth)}/>}</div><span className="lightbox-caption">{lightboxCaption}</span><button className="lightbox-close" type="button" onClick={() => setLightboxIndex(null)}>Закрыть</button>{mediaItems.length > 1 && <><button className="lightbox-arrow lightbox-prev" type="button" onClick={() => setLightboxIndex(index => (index - 1 + mediaItems.length) % mediaItems.length)} aria-label="Предыдущий материал"><ChevronLeft aria-hidden="true"/></button><button className="lightbox-arrow lightbox-next" type="button" onClick={() => setLightboxIndex(index => (index + 1) % mediaItems.length)} aria-label="Следующий материал"><ChevronRight aria-hidden="true"/></button><span className="lightbox-count">{lightboxIndex + 1} / {mediaItems.length}</span></>}</div>}</>;
+  return <><MobileSwitch mode="project"/><main className="case-shell"><section className="case-info" id="project-info"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><header className={hasProjectCta ? "has-cta" : "no-cta"}><h1>{data.title}</h1><p>{data.subtitle}</p>{hasProjectCta && <Link href="https://t.me/myautau" className="light-button case-cta">Обсудить проект</Link>}</header><div className="case-meta">{data.meta.filter(([k]) => k !== "Продукт").map(([k,v])=><p key={k}><span>{k}</span><b>{v}</b></p>)}</div><p className={`case-intro${visibleSections.length === 0 ? " case-intro-last" : ""}`}>{data.intro}</p>{visibleSections.map(([title,text])=><article className={`case-text${title === "О задаче" ? " case-task" : ""}`} key={title} id={title.toLowerCase().replaceAll(" ","-")}><h2>{title}</h2><p>{text}</p></article>)}<Link href="/" className="text-link">Все проекты <ArrowUpRight size={16}/></Link></section><section className={`case-gallery${usesUnifiedCorners ? " uniform-media-gallery" : ""}${data.title === "Вместе.ру" ? " vmeste-gallery" : ""}${data.gallery.length === 1 ? " single-media" : ""}${data.galleryLayout === "stack" ? " stack-media" : ""}`} id="gallery"><div className="gallery-desktop"><div>{leftGallery.map(renderImage)}</div><div>{rightGallery.map(renderImage)}</div></div><div className="gallery-mobile">{data.gallery.map(renderImage)}</div></section></main>{lightboxIndex !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Просмотр материалов проекта"><div className={`lightbox-scroll${isZoomed ? " zoomed" : ""}`} onClick={(event) => event.target === event.currentTarget && setLightboxIndex(null)}>{lightboxMedia}</div><span className="lightbox-caption">{lightboxCaption}</span><button className="lightbox-close" type="button" onClick={() => setLightboxIndex(null)}>Закрыть</button>{mediaItems.length > 1 && <><button className="lightbox-arrow lightbox-prev" type="button" onClick={() => setLightboxIndex(index => (index - 1 + mediaItems.length) % mediaItems.length)} aria-label="Предыдущий материал"><ChevronLeft aria-hidden="true"/></button><button className="lightbox-arrow lightbox-next" type="button" onClick={() => setLightboxIndex(index => (index + 1) % mediaItems.length)} aria-label="Следующий материал"><ChevronRight aria-hidden="true"/></button><span className="lightbox-count">{lightboxIndex + 1} / {mediaItems.length}</span></>}</div>}</>;
 }
 
 function ResumePage() {
@@ -562,11 +619,18 @@ export function App() {
   }, []);
   useEffect(() => {
     if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    const frame = window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
-    return () => window.cancelAnimationFrame(frame);
+  }, []);
+  useLayoutEffect(() => {
+    const resetScroll = () => {
+      window.scrollTo(0, 0);
+      document.scrollingElement && (document.scrollingElement.scrollTop = 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    resetScroll();
+    const frame = window.requestAnimationFrame(resetScroll);
+    const timer = window.setTimeout(resetScroll, 0);
+    return () => { window.cancelAnimationFrame(frame); window.clearTimeout(timer); };
   }, [route]);
   if (route === "/metrics") return <Suspense fallback={null}><MetricsTrainer/></Suspense>;
   if (route === "/") return <TypographedPage key={route}><Home hypothesis/></TypographedPage>;
