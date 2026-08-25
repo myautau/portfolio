@@ -9,6 +9,7 @@ const MetricsTrainer = lazy(() => import("./MetricsTrainer"));
 const A = `${import.meta.env.BASE_URL}assets/`;
 const V = `${import.meta.env.BASE_URL}videos/`;
 const BASE_PATH = import.meta.env.BASE_URL.replace(/\/$/, "");
+const NAVIGATION_EVENT = "portfolio:navigate";
 const withBasePath = href => href.startsWith("/") && !href.startsWith("//") ? `${BASE_PATH}${href}` || "/" : href;
 const stripBasePath = pathname => {
   const normalized = pathname.replace(/\/$/, "") || "/";
@@ -73,9 +74,7 @@ function Link({ href, children, className = "", onClick, ...props }) {
     onClick?.(event);
     if (event.defaultPrevented || external || href.startsWith("#") || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
-    window.history.pushState({}, "", targetHref);
-    window.dispatchEvent(new PopStateEvent("popstate"));
-    window.scrollTo({ top: 0, left: 0 });
+    window.dispatchEvent(new CustomEvent(NAVIGATION_EVENT, { detail: { href: targetHref } }));
   };
   return <a href={targetHref} className={className} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined} onClick={navigate} {...props}>{children}</a>;
 }
@@ -537,16 +536,24 @@ function CasePage({ data }) {
   const mediaEntries = data.gallery;
   const mediaItems = mediaEntries.map(item => typeof item === "object" && (item.type === "video" || item.type === "vimeo") ? item.src : assetUrl(item));
   const [lightboxIndex, setLightboxIndex] = useState(null);
-  const [isZoomed, setIsZoomed] = useState(false);
-  const [zoomPoint, setZoomPoint] = useState({ x: 0.5, y: 0.5 });
+  const [lightboxTransform, setLightboxTransform] = useState({ scale: 1, x: 0, y: 0 });
+  const [isDesktopZoomed, setIsDesktopZoomed] = useState(false);
+  const [desktopZoomPoint, setDesktopZoomPoint] = useState({ x: 0.5, y: 0.5 });
   const swipeStartRef = useRef(null);
-  const suppressZoomRef = useRef(false);
+  const pinchGestureRef = useRef(null);
+  const lightboxTransformRef = useRef(lightboxTransform);
   const lightboxMediaRef = useRef(null);
   const lightboxOriginRef = useRef(null);
+  const updateLightboxTransform = (nextTransform) => {
+    lightboxTransformRef.current = nextTransform;
+    setLightboxTransform(nextTransform);
+  };
   useLayoutEffect(() => {
     const gallery = document.querySelector(".case-gallery");
     if (!gallery) return undefined;
-    const figures = [...gallery.querySelectorAll("figure")];
+    const isMobile = window.matchMedia("(max-width: 809px)").matches;
+    const visibleGallery = gallery.querySelector(isMobile ? ".gallery-mobile" : ".gallery-desktop") || gallery;
+    const figures = [...visibleGallery.querySelectorAll("figure")];
     figures.forEach((figure) => {
       figure.classList.add("gallery-reveal-ready");
     });
@@ -560,13 +567,19 @@ function CasePage({ data }) {
         entry.target.classList.add("gallery-reveal-visible");
         observer.unobserve(entry.target);
       });
-    }, { root: null, threshold: 0, rootMargin: "0px" });
+    }, {
+      root: isMobile ? null : gallery,
+      threshold: 0.12,
+      rootMargin: isMobile ? "0px 0px -8% 0px" : "0px 0px -6% 0px",
+    });
     figures.forEach(figure => observer.observe(figure));
     return () => observer.disconnect();
   }, [data.title]);
   useEffect(() => {
     if (lightboxIndex === null) return;
-    setIsZoomed(false);
+    updateLightboxTransform({ scale: 1, x: 0, y: 0 });
+    setIsDesktopZoomed(false);
+    pinchGestureRef.current = null;
     document.querySelector(".lightbox-scroll")?.scrollTo({ top: 0, left: 0 });
     const previousOverflow = document.body.style.overflow;
     const navigateLightbox = (event) => {
@@ -582,6 +595,19 @@ function CasePage({ data }) {
     };
   }, [lightboxIndex, mediaItems.length]);
   useEffect(() => {
+    if (!isDesktopZoomed || lightboxIndex === null) return;
+    const frame = window.requestAnimationFrame(() => {
+      const scroller = document.querySelector(".lightbox-scroll");
+      if (!scroller) return;
+      scroller.scrollTo({
+        left: desktopZoomPoint.x * scroller.scrollWidth - scroller.clientWidth / 2,
+        top: desktopZoomPoint.y * scroller.scrollHeight - scroller.clientHeight / 2,
+        behavior: "smooth",
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [isDesktopZoomed, desktopZoomPoint, lightboxIndex]);
+  useEffect(() => {
     if (lightboxIndex === null || mediaEntries.length < 2) return;
     const adjacent = [
       mediaEntries[(lightboxIndex - 1 + mediaEntries.length) % mediaEntries.length],
@@ -594,24 +620,13 @@ function CasePage({ data }) {
       image.decode?.().catch(() => {});
     });
   }, [lightboxIndex, mediaEntries]);
-  useEffect(() => {
-    if (lightboxIndex === null) return;
-    const frame = window.requestAnimationFrame(() => {
-      const scroller = document.querySelector(".lightbox-scroll");
-      if (!scroller) return;
-      scroller.scrollTo({
-        left: isZoomed ? zoomPoint.x * scroller.scrollWidth - scroller.clientWidth / 2 : 0,
-        top: isZoomed ? zoomPoint.y * scroller.scrollHeight - scroller.clientHeight / 2 : 0,
-      });
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [isZoomed, zoomPoint, lightboxIndex]);
   useLayoutEffect(() => {
-    if (lightboxIndex === null || !lightboxMediaRef.current || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (lightboxIndex === null || !lightboxMediaRef.current) {
       lightboxOriginRef.current = null;
       return;
     }
     const media = lightboxMediaRef.current;
+    media.getAnimations().forEach(animation => animation.cancel());
     const target = media.getBoundingClientRect();
     const origin = lightboxOriginRef.current;
     lightboxOriginRef.current = null;
@@ -619,35 +634,75 @@ function CasePage({ data }) {
       const deltaX = origin.left + origin.width / 2 - (target.left + target.width / 2);
       const deltaY = origin.top + origin.height / 2 - (target.top + target.height / 2);
       media.animate([
-        { opacity: 0.92, transform: `translate(${deltaX}px, ${deltaY}px) scale(${origin.width / target.width}, ${origin.height / target.height})` },
+        { opacity: 0.5, filter: "blur(3px)", transform: `translate(${deltaX}px, ${deltaY}px) scale(${origin.width / target.width}, ${origin.height / target.height})` },
+        { opacity: 1, filter: "blur(0)", offset: 0.72 },
         { opacity: 1, transform: "none" },
-      ], { duration: 520, easing: "cubic-bezier(.22,1,.36,1)" });
+      ], { duration: 620, easing: "cubic-bezier(.16,1,.3,1)" });
       return;
     }
-    media.animate([
-      { opacity: 0, transform: "translateY(6px) scale(.992)" },
-      { opacity: 1, transform: "none" },
-    ], { duration: 300, easing: "cubic-bezier(.22,1,.36,1)" });
   }, [lightboxIndex]);
 
-  const toggleImageZoom = (event) => {
-    if (suppressZoomRef.current) {
-      suppressZoomRef.current = false;
-      return;
-    }
-    if (!isZoomed) {
+  const touchDistance = (touches) => Math.hypot(
+    touches[0].clientX - touches[1].clientX,
+    touches[0].clientY - touches[1].clientY,
+  );
+
+  const touchMidpoint = (touches) => ({
+    x: (touches[0].clientX + touches[1].clientX) / 2,
+    y: (touches[0].clientY + touches[1].clientY) / 2,
+  });
+
+  const clampLightboxPan = (scale, x, y) => {
+    const media = lightboxMediaRef.current;
+    if (!media || scale <= 1) return { scale: 1, x: 0, y: 0 };
+    const rect = media.getBoundingClientRect();
+    const baseWidth = rect.width / Math.max(lightboxTransformRef.current.scale, 1);
+    const baseHeight = rect.height / Math.max(lightboxTransformRef.current.scale, 1);
+    const maxX = Math.max(0, (baseWidth * scale - window.innerWidth) / 2 + 24);
+    const maxY = Math.max(0, (baseHeight * scale - window.innerHeight) / 2 + 56);
+    return {
+      scale,
+      x: Math.max(-maxX, Math.min(maxX, x)),
+      y: Math.max(-maxY, Math.min(maxY, y)),
+    };
+  };
+
+  const toggleDesktopImageZoom = (event) => {
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    if (!isDesktopZoomed) {
       const rect = event.currentTarget.getBoundingClientRect();
-      setZoomPoint({
-        x: event.clientX ? (event.clientX - rect.left) / rect.width : 0.5,
-        y: event.clientY ? (event.clientY - rect.top) / rect.height : 0.5,
+      setDesktopZoomPoint({
+        x: (event.clientX - rect.left) / rect.width,
+        y: (event.clientY - rect.top) / rect.height,
       });
     }
-    setIsZoomed(value => !value);
+    setIsDesktopZoomed(value => !value);
   };
 
   const handleLightboxTouchStart = (event) => {
-    suppressZoomRef.current = false;
-    if (isZoomed || mediaItems.length < 2 || event.touches.length !== 1) {
+    if (lightboxIsMotion || !window.matchMedia("(pointer: coarse)").matches) return;
+    if (event.touches.length === 2) {
+      const transform = lightboxTransformRef.current;
+      pinchGestureRef.current = {
+        type: "pinch",
+        distance: touchDistance(event.touches),
+        midpoint: touchMidpoint(event.touches),
+        transform,
+      };
+      swipeStartRef.current = null;
+      return;
+    }
+    if (event.touches.length === 1 && lightboxTransformRef.current.scale > 1) {
+      const touch = event.touches[0];
+      pinchGestureRef.current = {
+        type: "pan",
+        point: { x: touch.clientX, y: touch.clientY },
+        transform: lightboxTransformRef.current,
+      };
+      swipeStartRef.current = null;
+      return;
+    }
+    if (mediaItems.length < 2 || event.touches.length !== 1) {
       swipeStartRef.current = null;
       return;
     }
@@ -655,21 +710,58 @@ function CasePage({ data }) {
     swipeStartRef.current = { x: touch.clientX, y: touch.clientY };
   };
 
+  const handleLightboxTouchMove = (event) => {
+    const gesture = pinchGestureRef.current;
+    if (!gesture || lightboxIsMotion) return;
+    if (gesture.type === "pinch" && event.touches.length === 2) {
+      event.preventDefault();
+      const midpoint = touchMidpoint(event.touches);
+      const scale = Math.max(1, Math.min(4, gesture.transform.scale * touchDistance(event.touches) / gesture.distance));
+      const scaleRatio = scale / gesture.transform.scale;
+      const viewportCenter = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+      const x = midpoint.x - viewportCenter.x - scaleRatio * (gesture.midpoint.x - viewportCenter.x - gesture.transform.x);
+      const y = midpoint.y - viewportCenter.y - scaleRatio * (gesture.midpoint.y - viewportCenter.y - gesture.transform.y);
+      updateLightboxTransform(clampLightboxPan(scale, x, y));
+      return;
+    }
+    if (gesture.type === "pan" && event.touches.length === 1) {
+      event.preventDefault();
+      const touch = event.touches[0];
+      updateLightboxTransform(clampLightboxPan(
+        gesture.transform.scale,
+        gesture.transform.x + touch.clientX - gesture.point.x,
+        gesture.transform.y + touch.clientY - gesture.point.y,
+      ));
+    }
+  };
+
   const handleLightboxTouchEnd = (event) => {
+    if (pinchGestureRef.current) {
+      if (event.touches.length === 1 && lightboxTransformRef.current.scale > 1) {
+        const touch = event.touches[0];
+        pinchGestureRef.current = {
+          type: "pan",
+          point: { x: touch.clientX, y: touch.clientY },
+          transform: lightboxTransformRef.current,
+        };
+      } else if (event.touches.length === 0) {
+        pinchGestureRef.current = null;
+        if (lightboxTransformRef.current.scale < 1.03) updateLightboxTransform({ scale: 1, x: 0, y: 0 });
+      }
+      swipeStartRef.current = null;
+      return;
+    }
     const start = swipeStartRef.current;
     swipeStartRef.current = null;
-    if (!start || isZoomed || mediaItems.length < 2 || event.changedTouches.length !== 1) return;
+    if (!start || mediaItems.length < 2 || event.changedTouches.length !== 1) return;
     const touch = event.changedTouches[0];
     const deltaX = touch.clientX - start.x;
     const deltaY = touch.clientY - start.y;
     if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.15) return;
     event.preventDefault();
-    suppressZoomRef.current = true;
-    setIsZoomed(false);
     setLightboxIndex(index => deltaX < 0
       ? (index + 1) % mediaItems.length
       : (index - 1 + mediaItems.length) % mediaItems.length);
-    window.setTimeout(() => { suppressZoomRef.current = false; }, 350);
   };
 
   const openLightbox = (index, event) => {
@@ -714,9 +806,9 @@ function CasePage({ data }) {
     ? <div key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={`lightbox-vimeo-frame${lightboxIsVmeste ? " lightbox-vmeste-video" : ""}`}><iframe src={mediaItems[lightboxIndex]} title={lightboxCaption} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen/></div>
     : lightboxIsVideo
       ? <video key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={lightboxIsVmeste ? "lightbox-vmeste-video" : undefined} src={mediaItems[lightboxIndex]} autoPlay muted loop playsInline disablePictureInPicture disableRemotePlayback/>
-      : <img key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={`${isZoomed ? "lightbox-zoomed " : ""}${usesUnifiedCorners ? "lightbox-uniform " : ""}${lightboxIsVmeste ? "lightbox-vmeste " : ""}${lightboxIsVmesteStories ? "lightbox-stories " : ""}${lightboxIsPaddedConcept ? "lightbox-padded-concept " : ""}${lightboxIsSkiOnDarkBackground ? "lightbox-ski-dark" : ""}`.trim()} style={lightboxBackground ? { backgroundColor: lightboxBackground, "--media-background": lightboxBackground } : undefined} src={mediaItems[lightboxIndex]} width={lightboxDimensions?.[0]} height={lightboxDimensions?.[1]} alt="" role="button" tabIndex={0} aria-label={isZoomed ? "Уменьшить изображение" : "Увеличить изображение"} onClick={toggleImageZoom} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggleImageZoom(event); } }} onLoad={(event) => event.currentTarget.classList.toggle("lightbox-tall", event.currentTarget.naturalHeight > event.currentTarget.naturalWidth)}/>;
+      : <img key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={`${isDesktopZoomed ? "lightbox-desktop-zoomed " : ""}${usesUnifiedCorners ? "lightbox-uniform " : ""}${lightboxIsVmeste ? "lightbox-vmeste " : ""}${lightboxIsVmesteStories ? "lightbox-stories " : ""}${lightboxIsPaddedConcept ? "lightbox-padded-concept " : ""}${lightboxIsSkiOnDarkBackground ? "lightbox-ski-dark" : ""}${lightboxTransform.scale > 1 ? " lightbox-pinched" : ""}`.trim()} style={{ ...(lightboxBackground ? { backgroundColor: lightboxBackground, "--media-background": lightboxBackground } : {}), transform: `translate3d(${lightboxTransform.x}px, ${lightboxTransform.y}px, 0) scale(${lightboxTransform.scale})` }} src={mediaItems[lightboxIndex]} width={lightboxDimensions?.[0]} height={lightboxDimensions?.[1]} alt="" onClick={toggleDesktopImageZoom} onLoad={(event) => event.currentTarget.classList.toggle("lightbox-tall", event.currentTarget.naturalHeight > event.currentTarget.naturalWidth)}/>;
   const visibleSections = data.sections.filter(([title]) => !(data.hideSections || []).includes(title));
-  return <><MobileSwitch mode="project"/><main className="case-shell"><section className="case-info" id="project-info"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><header className={hasProjectCta ? "has-cta" : "no-cta"}><h1>{data.title}</h1><p>{data.subtitle}</p>{hasProjectCta && <Link href="https://t.me/myautau" className="light-button case-cta">Обсудить проект</Link>}</header><div className="case-meta">{data.meta.filter(([k]) => k !== "Продукт").map(([k,v])=><p key={k}><span>{k}</span><b>{v}</b></p>)}</div><p className={`case-intro${visibleSections.length === 0 ? " case-intro-last" : ""}`}>{data.intro}</p>{visibleSections.map(([title,text])=><article className={`case-text${title === "О задаче" ? " case-task" : ""}`} key={title} id={title.toLowerCase().replaceAll(" ","-")}><h2>{title}</h2><p>{text}</p></article>)}<Link href="/" className="text-link">Все проекты <ArrowUpRight size={16}/></Link></section><section className={`case-gallery${usesUnifiedCorners ? " uniform-media-gallery" : ""}${data.title === "Вместе.ру" ? " vmeste-gallery" : ""}${data.title === "Манжерок" ? " ski-gallery" : ""}${data.gallery.length === 1 ? " single-media" : ""}${data.galleryLayout === "stack" ? " stack-media" : ""}`} id="gallery"><div className="gallery-desktop"><div>{leftGallery.map(renderImage)}</div><div>{rightGallery.map(renderImage)}</div></div><div className="gallery-mobile">{data.gallery.map(renderImage)}</div></section></main>{lightboxIndex !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Просмотр материалов проекта"><div className={`lightbox-scroll${isZoomed ? " zoomed" : ""}`} onClick={(event) => event.target === event.currentTarget && setLightboxIndex(null)} onTouchStart={handleLightboxTouchStart} onTouchEnd={handleLightboxTouchEnd} onTouchCancel={() => { swipeStartRef.current = null; }}>{lightboxMedia}</div><span className="lightbox-caption">{lightboxCaption}</span><button className="lightbox-close" type="button" onClick={() => setLightboxIndex(null)}>Закрыть</button>{mediaItems.length > 1 && <><button className="lightbox-arrow lightbox-prev" type="button" onClick={() => setLightboxIndex(index => (index - 1 + mediaItems.length) % mediaItems.length)} aria-label="Предыдущий материал"><ChevronLeft aria-hidden="true"/></button><button className="lightbox-arrow lightbox-next" type="button" onClick={() => setLightboxIndex(index => (index + 1) % mediaItems.length)} aria-label="Следующий материал"><ChevronRight aria-hidden="true"/></button><span className="lightbox-count">{lightboxIndex + 1} / {mediaItems.length}</span></>}</div>}</>;
+  return <><MobileSwitch mode="project"/><main className="case-shell"><section className="case-info" id="project-info"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><header className={hasProjectCta ? "has-cta" : "no-cta"}><h1>{data.title}</h1><p>{data.subtitle}</p>{hasProjectCta && <Link href="https://t.me/myautau" className="light-button case-cta">Обсудить проект</Link>}</header><div className="case-meta">{data.meta.filter(([k]) => k !== "Продукт").map(([k,v])=><p key={k}><span>{k}</span><b>{v}</b></p>)}</div><p className={`case-intro${visibleSections.length === 0 ? " case-intro-last" : ""}`}>{data.intro}</p>{visibleSections.map(([title,text])=><article className={`case-text${title === "О задаче" ? " case-task" : ""}`} key={title} id={title.toLowerCase().replaceAll(" ","-")}><h2>{title}</h2><p>{text}</p></article>)}<Link href="/" className="text-link">Все проекты <ArrowUpRight size={16}/></Link></section><section className={`case-gallery${usesUnifiedCorners ? " uniform-media-gallery" : ""}${data.title === "Вместе.ру" ? " vmeste-gallery" : ""}${data.title === "Манжерок" ? " ski-gallery" : ""}${data.gallery.length === 1 ? " single-media" : ""}${data.galleryLayout === "stack" ? " stack-media" : ""}`} id="gallery"><div className="gallery-desktop"><div>{leftGallery.map(renderImage)}</div><div>{rightGallery.map(renderImage)}</div></div><div className="gallery-mobile">{data.gallery.map(renderImage)}</div></section></main>{lightboxIndex !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Просмотр материалов проекта"><div className={`lightbox-scroll${lightboxTransform.scale > 1 || isDesktopZoomed ? " zoomed" : ""}`} onClick={(event) => event.target === event.currentTarget && setLightboxIndex(null)} onTouchStart={handleLightboxTouchStart} onTouchMove={handleLightboxTouchMove} onTouchEnd={handleLightboxTouchEnd} onTouchCancel={() => { swipeStartRef.current = null; pinchGestureRef.current = null; }}>{lightboxMedia}</div><span className="lightbox-caption">{lightboxCaption}</span><button className="lightbox-close" type="button" onClick={() => setLightboxIndex(null)}>Закрыть</button>{mediaItems.length > 1 && <><button className="lightbox-arrow lightbox-prev" type="button" onClick={() => setLightboxIndex(index => (index - 1 + mediaItems.length) % mediaItems.length)} aria-label="Предыдущий материал"><ChevronLeft aria-hidden="true"/></button><button className="lightbox-arrow lightbox-next" type="button" onClick={() => setLightboxIndex(index => (index + 1) % mediaItems.length)} aria-label="Следующий материал"><ChevronRight aria-hidden="true"/></button><span className="lightbox-count">{lightboxIndex + 1} / {mediaItems.length}</span></>}</div>}</>;
 }
 
 function ResumePage() {
@@ -727,10 +819,35 @@ function ContactPage() { return <main className="contact-shell"><Link href="/" c
 
 export function App() {
   const [route, setRoute] = useState(() => stripBasePath(window.location.pathname));
+  const [isLeaving, setIsLeaving] = useState(false);
+  const routeRef = useRef(route);
+  const navigationTimerRef = useRef(null);
   useEffect(() => {
-    const syncRoute = () => setRoute(stripBasePath(window.location.pathname));
+    const transitionTo = (nextRoute, href) => {
+      if (nextRoute === routeRef.current) return;
+      window.clearTimeout(navigationTimerRef.current);
+      setIsLeaving(true);
+      const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 180;
+      navigationTimerRef.current = window.setTimeout(() => {
+        if (href) window.history.pushState({}, "", href);
+        routeRef.current = nextRoute;
+        setRoute(nextRoute);
+        setIsLeaving(false);
+      }, duration);
+    };
+    const navigate = event => {
+      const href = event.detail?.href;
+      if (!href) return;
+      transitionTo(stripBasePath(new URL(href, window.location.href).pathname), href);
+    };
+    const syncRoute = () => transitionTo(stripBasePath(window.location.pathname));
+    window.addEventListener(NAVIGATION_EVENT, navigate);
     window.addEventListener("popstate", syncRoute);
-    return () => window.removeEventListener("popstate", syncRoute);
+    return () => {
+      window.clearTimeout(navigationTimerRef.current);
+      window.removeEventListener(NAVIGATION_EVENT, navigate);
+      window.removeEventListener("popstate", syncRoute);
+    };
   }, []);
   useEffect(() => {
     if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
@@ -747,14 +864,15 @@ export function App() {
     const timer = window.setTimeout(resetScroll, 0);
     return () => { window.cancelAnimationFrame(frame); window.clearTimeout(timer); };
   }, [route]);
-  if (route === "/metrics") return <Suspense fallback={null}><MetricsTrainer/></Suspense>;
-  if (route === "/") return <TypographedPage key={route}><Home hypothesis/></TypographedPage>;
-  if (route === "/reference") return <Suspense fallback={null}><ReferencePage/></Suspense>;
-  if (route === "/hypothesis-test") return <TypographedPage key={route}><Home hypothesis/></TypographedPage>;
-  if (route === "/hypothesis-concepts") return <TypographedPage key={route}><CasePage data={cases["/other-projects"]}/></TypographedPage>;
-  if (cases[route]) return <TypographedPage key={route}><CasePage data={cases[route]}/></TypographedPage>;
-  if (route === "/cv") return <TypographedPage key={route}><ResumePage/></TypographedPage>;
-  if (route === "/contact") return <TypographedPage key={route}><ContactPage/></TypographedPage>;
-  if (route === "/copy" || route === "/portfolio") return <TypographedPage key={route}><Home hypothesis/></TypographedPage>;
-  return <TypographedPage key={route}><Home hypothesis/></TypographedPage>;
+  let page;
+  if (route === "/metrics") page = <Suspense fallback={null}><MetricsTrainer/></Suspense>;
+  else if (route === "/") page = <TypographedPage><Home hypothesis/></TypographedPage>;
+  else if (route === "/reference") page = <Suspense fallback={null}><ReferencePage/></Suspense>;
+  else if (route === "/hypothesis-test") page = <TypographedPage><Home hypothesis/></TypographedPage>;
+  else if (route === "/hypothesis-concepts") page = <TypographedPage><CasePage data={cases["/other-projects"]}/></TypographedPage>;
+  else if (cases[route]) page = <TypographedPage><CasePage data={cases[route]}/></TypographedPage>;
+  else if (route === "/cv") page = <TypographedPage><ResumePage/></TypographedPage>;
+  else if (route === "/contact") page = <TypographedPage><ContactPage/></TypographedPage>;
+  else page = <TypographedPage><Home hypothesis/></TypographedPage>;
+  return <div key={route} className={`route-view${isLeaving ? " route-view-leaving" : ""}`}>{page}</div>;
 }
