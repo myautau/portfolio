@@ -12,7 +12,7 @@ When implementing from a selected generated mock, treat that image as the source
 - The user specifically likes the reference typography. Use Switzer for supported glyphs and a visually close Cyrillic fallback for Russian copy.
 - Preserve Viktoria Matveeva's portfolio content, projects, resume, contact details, and existing local media assets when applying this design direction.
 - Keep the untouched visual reference recreation available separately at `/reference` for side-by-side comparison with Viktoria's portfolio.
-- Route changes on mobile and desktop should feel like the Framer reference: fade the current page with a slight blur and lift, reveal the next page softly from below, and always start the destination at the top.
+- Route changes on mobile and desktop should feel like the Framer reference: fade the current page with a slight blur and lift, reveal the next page softly from below, and always start the destination at the top without visibly scrolling the outgoing page.
 - Match the Framer reference's gallery reveal behavior: each media card appears once when it enters the active scroll viewport, with opacity-only spring-like easing over roughly 1.5 seconds, no lift, scale, blur, or stagger. On mobile, cards reveal sequentially down the single column as the page scrolls.
 - Keep videos and embedded players clipped to the same corner radius as adjacent gallery images.
 - In the «Вместе.ру» case, preserve each gallery asset's original composition and pink backing. Apply the shared small corner radius only to the outer gallery and lightbox containers; do not flatten, crop, or otherwise redraw the source images to create rounding.
@@ -24,7 +24,10 @@ When implementing from a selected generated mock, treat that image as the source
 - Do not push or publish changes to GitHub until Viktoria explicitly says «заливай».
 - On the mobile homepage, keep project-card containers slightly taller than square so phone mockups have breathing room and do not overlap the captions.
 - On the mobile homepage, position phone mockups slightly above the vertical center to keep the top gap compact.
+- On mobile, use a consistent 16px horizontal gutter for text blocks, project cards, galleries, resume, contacts, and internal case pages.
 - In mobile full-screen galleries, support horizontal swipe navigation while preserving vertical scrolling and zoomed-image panning.
+- In mobile full-screen galleries, keep the material title, «Закрыть», navigation arrows, and counter visible as a fixed layer above the media; every newly opened or swiped slide starts from the same unzoomed top position.
+- On mobile, keep both the homepage «Обо мне / Работы» switcher and case «О проекте / Галерея» switcher fixed to the viewport top, outside animated route containers.
 - Keep the gallery lightbox close to the Framer dark theme: a visibly translucent graphite backdrop with blur, restrained media shadow, and a shared-element opening transition from the selected card.
 - Reveal gallery cards once as they enter the scroll viewport, using a restrained Framer-like fade, upward motion, and slight blur reduction with a short stagger.
 - On mobile, keep experience role titles, company names, and dates at the same readable scale.

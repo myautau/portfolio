@@ -393,7 +393,7 @@ function Home({ hypothesis = false }) {
     document.title = "Viktoria Matveeva — Product Designer";
     return () => { document.title = previousTitle; };
   }, [hypothesis]);
-  return <><MobileSwitch/><main className={`portfolio-shell${hypothesis ? " hypothesis-page" : ""}`}><div className="about-wrap"><AboutPane/></div><WorkPane hypothesis={hypothesis}/></main></>;
+  return <main className={`portfolio-shell${hypothesis ? " hypothesis-page" : ""}`}><div className="about-wrap"><AboutPane/></div><WorkPane hypothesis={hypothesis}/></main>;
 }
 
 const cases = {
@@ -543,10 +543,22 @@ function CasePage({ data }) {
   const pinchGestureRef = useRef(null);
   const lightboxTransformRef = useRef(lightboxTransform);
   const lightboxMediaRef = useRef(null);
+  const lightboxScrollRef = useRef(null);
   const lightboxOriginRef = useRef(null);
   const updateLightboxTransform = (nextTransform) => {
     lightboxTransformRef.current = nextTransform;
     setLightboxTransform(nextTransform);
+  };
+  const resetLightboxPosition = () => {
+    updateLightboxTransform({ scale: 1, x: 0, y: 0 });
+    setIsDesktopZoomed(false);
+    pinchGestureRef.current = null;
+    swipeStartRef.current = null;
+    lightboxScrollRef.current?.scrollTo(0, 0);
+  };
+  const changeLightboxIndex = (nextIndex) => {
+    resetLightboxPosition();
+    setLightboxIndex(nextIndex);
   };
   useLayoutEffect(() => {
     const gallery = document.querySelector(".case-gallery");
@@ -577,15 +589,11 @@ function CasePage({ data }) {
   }, [data.title]);
   useEffect(() => {
     if (lightboxIndex === null) return;
-    updateLightboxTransform({ scale: 1, x: 0, y: 0 });
-    setIsDesktopZoomed(false);
-    pinchGestureRef.current = null;
-    document.querySelector(".lightbox-scroll")?.scrollTo({ top: 0, left: 0 });
     const previousOverflow = document.body.style.overflow;
     const navigateLightbox = (event) => {
       if (event.key === "Escape") setLightboxIndex(null);
-      if (event.key === "ArrowLeft" && mediaItems.length > 1) setLightboxIndex(index => (index - 1 + mediaItems.length) % mediaItems.length);
-      if (event.key === "ArrowRight" && mediaItems.length > 1) setLightboxIndex(index => (index + 1) % mediaItems.length);
+      if (event.key === "ArrowLeft" && mediaItems.length > 1) changeLightboxIndex(index => (index - 1 + mediaItems.length) % mediaItems.length);
+      if (event.key === "ArrowRight" && mediaItems.length > 1) changeLightboxIndex(index => (index + 1) % mediaItems.length);
     };
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", navigateLightbox);
@@ -594,6 +602,10 @@ function CasePage({ data }) {
       window.removeEventListener("keydown", navigateLightbox);
     };
   }, [lightboxIndex, mediaItems.length]);
+  useLayoutEffect(() => {
+    if (lightboxIndex === null) return;
+    lightboxScrollRef.current?.scrollTo(0, 0);
+  }, [lightboxIndex]);
   useEffect(() => {
     if (!isDesktopZoomed || lightboxIndex === null) return;
     const frame = window.requestAnimationFrame(() => {
@@ -759,7 +771,7 @@ function CasePage({ data }) {
     const deltaY = touch.clientY - start.y;
     if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.15) return;
     event.preventDefault();
-    setLightboxIndex(index => deltaX < 0
+    changeLightboxIndex(index => deltaX < 0
       ? (index + 1) % mediaItems.length
       : (index - 1 + mediaItems.length) % mediaItems.length);
   };
@@ -768,7 +780,7 @@ function CasePage({ data }) {
     const source = event.currentTarget.closest("figure") || event.currentTarget;
     const rect = source.getBoundingClientRect();
     lightboxOriginRef.current = { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
-    setLightboxIndex(index);
+    changeLightboxIndex(index);
   };
 
   const renderImage = (item, i) => {
@@ -808,7 +820,7 @@ function CasePage({ data }) {
       ? <video key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={lightboxIsVmeste ? "lightbox-vmeste-video" : undefined} src={mediaItems[lightboxIndex]} autoPlay muted loop playsInline disablePictureInPicture disableRemotePlayback/>
       : <img key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={`${isDesktopZoomed ? "lightbox-desktop-zoomed " : ""}${usesUnifiedCorners ? "lightbox-uniform " : ""}${lightboxIsVmeste ? "lightbox-vmeste " : ""}${lightboxIsVmesteStories ? "lightbox-stories " : ""}${lightboxIsPaddedConcept ? "lightbox-padded-concept " : ""}${lightboxIsSkiOnDarkBackground ? "lightbox-ski-dark" : ""}${lightboxTransform.scale > 1 ? " lightbox-pinched" : ""}`.trim()} style={{ ...(lightboxBackground ? { backgroundColor: lightboxBackground, "--media-background": lightboxBackground } : {}), transform: `translate3d(${lightboxTransform.x}px, ${lightboxTransform.y}px, 0) scale(${lightboxTransform.scale})` }} src={mediaItems[lightboxIndex]} width={lightboxDimensions?.[0]} height={lightboxDimensions?.[1]} alt="" onClick={toggleDesktopImageZoom} onLoad={(event) => event.currentTarget.classList.toggle("lightbox-tall", event.currentTarget.naturalHeight > event.currentTarget.naturalWidth)}/>;
   const visibleSections = data.sections.filter(([title]) => !(data.hideSections || []).includes(title));
-  return <><MobileSwitch mode="project"/><main className="case-shell"><section className="case-info" id="project-info"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><header className={hasProjectCta ? "has-cta" : "no-cta"}><h1>{data.title}</h1><p>{data.subtitle}</p>{hasProjectCta && <Link href="https://t.me/myautau" className="light-button case-cta">Обсудить проект</Link>}</header><div className="case-meta">{data.meta.filter(([k]) => k !== "Продукт").map(([k,v])=><p key={k}><span>{k}</span><b>{v}</b></p>)}</div><p className={`case-intro${visibleSections.length === 0 ? " case-intro-last" : ""}`}>{data.intro}</p>{visibleSections.map(([title,text])=><article className={`case-text${title === "О задаче" ? " case-task" : ""}`} key={title} id={title.toLowerCase().replaceAll(" ","-")}><h2>{title}</h2><p>{text}</p></article>)}<Link href="/" className="text-link">Все проекты <ArrowUpRight size={16}/></Link></section><section className={`case-gallery${usesUnifiedCorners ? " uniform-media-gallery" : ""}${data.title === "Вместе.ру" ? " vmeste-gallery" : ""}${data.title === "Манжерок" ? " ski-gallery" : ""}${data.gallery.length === 1 ? " single-media" : ""}${data.galleryLayout === "stack" ? " stack-media" : ""}`} id="gallery"><div className="gallery-desktop"><div>{leftGallery.map(renderImage)}</div><div>{rightGallery.map(renderImage)}</div></div><div className="gallery-mobile">{data.gallery.map(renderImage)}</div></section></main>{lightboxIndex !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Просмотр материалов проекта"><div className={`lightbox-scroll${lightboxTransform.scale > 1 || isDesktopZoomed ? " zoomed" : ""}`} onClick={(event) => event.target === event.currentTarget && setLightboxIndex(null)} onTouchStart={handleLightboxTouchStart} onTouchMove={handleLightboxTouchMove} onTouchEnd={handleLightboxTouchEnd} onTouchCancel={() => { swipeStartRef.current = null; pinchGestureRef.current = null; }}>{lightboxMedia}</div><span className="lightbox-caption">{lightboxCaption}</span><button className="lightbox-close" type="button" onClick={() => setLightboxIndex(null)}>Закрыть</button>{mediaItems.length > 1 && <><button className="lightbox-arrow lightbox-prev" type="button" onClick={() => setLightboxIndex(index => (index - 1 + mediaItems.length) % mediaItems.length)} aria-label="Предыдущий материал"><ChevronLeft aria-hidden="true"/></button><button className="lightbox-arrow lightbox-next" type="button" onClick={() => setLightboxIndex(index => (index + 1) % mediaItems.length)} aria-label="Следующий материал"><ChevronRight aria-hidden="true"/></button><span className="lightbox-count">{lightboxIndex + 1} / {mediaItems.length}</span></>}</div>}</>;
+  return <><main className="case-shell"><section className="case-info" id="project-info"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><header className={hasProjectCta ? "has-cta" : "no-cta"}><h1>{data.title}</h1><p>{data.subtitle}</p>{hasProjectCta && <Link href="https://t.me/myautau" className="light-button case-cta">Обсудить проект</Link>}</header><div className="case-meta">{data.meta.filter(([k]) => k !== "Продукт").map(([k,v])=><p key={k}><span>{k}</span><b>{v}</b></p>)}</div><p className={`case-intro${visibleSections.length === 0 ? " case-intro-last" : ""}`}>{data.intro}</p>{visibleSections.map(([title,text])=><article className={`case-text${title === "О задаче" ? " case-task" : ""}`} key={title} id={title.toLowerCase().replaceAll(" ","-")}><h2>{title}</h2><p>{text}</p></article>)}<Link href="/" className="text-link">Все проекты <ArrowUpRight size={16}/></Link></section><section className={`case-gallery${usesUnifiedCorners ? " uniform-media-gallery" : ""}${data.title === "Вместе.ру" ? " vmeste-gallery" : ""}${data.title === "Манжерок" ? " ski-gallery" : ""}${data.gallery.length === 1 ? " single-media" : ""}${data.galleryLayout === "stack" ? " stack-media" : ""}`} id="gallery"><div className="gallery-desktop"><div>{leftGallery.map(renderImage)}</div><div>{rightGallery.map(renderImage)}</div></div><div className="gallery-mobile">{data.gallery.map(renderImage)}</div></section></main>{lightboxIndex !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Просмотр материалов проекта"><div ref={lightboxScrollRef} className={`lightbox-scroll${lightboxTransform.scale > 1 || isDesktopZoomed ? " zoomed" : ""}`} onClick={(event) => event.target === event.currentTarget && setLightboxIndex(null)} onTouchStart={handleLightboxTouchStart} onTouchMove={handleLightboxTouchMove} onTouchEnd={handleLightboxTouchEnd} onTouchCancel={() => { swipeStartRef.current = null; pinchGestureRef.current = null; }}>{lightboxMedia}</div><div className="lightbox-controls"><span className="lightbox-caption">{lightboxCaption}</span><button className="lightbox-close" type="button" onClick={() => setLightboxIndex(null)}>Закрыть</button>{mediaItems.length > 1 && <><button className="lightbox-arrow lightbox-prev" type="button" onClick={() => changeLightboxIndex(index => (index - 1 + mediaItems.length) % mediaItems.length)} aria-label="Предыдущий материал"><ChevronLeft aria-hidden="true"/></button><button className="lightbox-arrow lightbox-next" type="button" onClick={() => changeLightboxIndex(index => (index + 1) % mediaItems.length)} aria-label="Следующий материал"><ChevronRight aria-hidden="true"/></button><span className="lightbox-count">{lightboxIndex + 1} / {mediaItems.length}</span></>}</div></div>}</>;
 }
 
 function ResumePage() {
@@ -852,16 +864,15 @@ export function App() {
   useEffect(() => {
     if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
   }, []);
-  useLayoutEffect(() => {
+  useEffect(() => {
     const resetScroll = () => {
       window.scrollTo(0, 0);
       document.scrollingElement && (document.scrollingElement.scrollTop = 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     };
-    resetScroll();
     const frame = window.requestAnimationFrame(resetScroll);
-    const timer = window.setTimeout(resetScroll, 0);
+    const timer = window.setTimeout(resetScroll, 120);
     return () => { window.cancelAnimationFrame(frame); window.clearTimeout(timer); };
   }, [route]);
   let page;
@@ -874,5 +885,8 @@ export function App() {
   else if (route === "/cv") page = <TypographedPage><ResumePage/></TypographedPage>;
   else if (route === "/contact") page = <TypographedPage><ContactPage/></TypographedPage>;
   else page = <TypographedPage><Home hypothesis/></TypographedPage>;
-  return <div key={route} className={`route-view${isLeaving ? " route-view-leaving" : ""}`}>{page}</div>;
+  const mobileSwitchMode = route === "/" || route === "/hypothesis-test"
+    ? "home"
+    : (cases[route] || route === "/hypothesis-concepts" ? "project" : null);
+  return <>{mobileSwitchMode && <MobileSwitch mode={mobileSwitchMode}/>}<div key={route} className={`route-view${isLeaving ? " route-view-leaving" : ""}`}>{page}</div></>;
 }
