@@ -383,6 +383,14 @@ function WorkPane({ hypothesis = false }) {
   const left = hypothesis ? hypothesisLeft : workLeft;
   const right = hypothesis ? hypothesisRight : workRight;
   const mobileOrder = Array.from({ length: Math.max(left.length, right.length) }, (_, index) => [left[index], right[index]]).flat().filter(Boolean);
+  useLayoutEffect(() => {
+    const cards = [...document.querySelectorAll(".work-pane .work-card")];
+    cards.forEach(card => card.classList.add("home-card-reveal-ready"));
+    const frame = window.requestAnimationFrame(() => {
+      cards.forEach(card => card.classList.add("home-card-reveal-visible"));
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [hypothesis]);
   return <section className={`work-pane${hypothesis ? " hypothesis-work" : ""}`} id="work"><div className="work-desktop"><div className="work-column">{left.map((p, index)=><ProjectCard key={p.title} project={p} priority={index === 0}/>)}</div><div className="work-column">{right.map((p, index)=><ProjectCard key={p.title} project={p} priority={index === 0}/>)}</div></div><div className="work-mobile-list">{mobileOrder.map((p, index)=><ProjectCard key={p.title} project={p} priority={index === 0}/>)}</div></section>;
 }
 
@@ -596,9 +604,11 @@ function CasePage({ data }) {
       if (event.key === "ArrowRight" && mediaItems.length > 1) changeLightboxIndex(index => (index + 1) % mediaItems.length);
     };
     document.body.style.overflow = "hidden";
+    document.body.classList.add("lightbox-open");
     window.addEventListener("keydown", navigateLightbox);
     return () => {
       document.body.style.overflow = previousOverflow;
+      document.body.classList.remove("lightbox-open");
       window.removeEventListener("keydown", navigateLightbox);
     };
   }, [lightboxIndex, mediaItems.length]);
@@ -834,10 +844,17 @@ export function App() {
   const [isLeaving, setIsLeaving] = useState(false);
   const routeRef = useRef(route);
   const navigationTimerRef = useRef(null);
+  const resetDocumentScroll = () => {
+    window.scrollTo(0, 0);
+    document.scrollingElement && (document.scrollingElement.scrollTop = 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  };
   useEffect(() => {
     const transitionTo = (nextRoute, href) => {
       if (nextRoute === routeRef.current) return;
       window.clearTimeout(navigationTimerRef.current);
+      document.body.classList.add("route-transitioning");
       setIsLeaving(true);
       const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 180;
       navigationTimerRef.current = window.setTimeout(() => {
@@ -845,6 +862,10 @@ export function App() {
         routeRef.current = nextRoute;
         setRoute(nextRoute);
         setIsLeaving(false);
+        window.requestAnimationFrame(() => {
+          resetDocumentScroll();
+          document.body.classList.remove("route-transitioning");
+        });
       }, duration);
     };
     const navigate = event => {
@@ -857,6 +878,7 @@ export function App() {
     window.addEventListener("popstate", syncRoute);
     return () => {
       window.clearTimeout(navigationTimerRef.current);
+      document.body.classList.remove("route-transitioning");
       window.removeEventListener(NAVIGATION_EVENT, navigate);
       window.removeEventListener("popstate", syncRoute);
     };
@@ -864,17 +886,12 @@ export function App() {
   useEffect(() => {
     if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
   }, []);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const resetScroll = () => {
-      window.scrollTo(0, 0);
-      document.scrollingElement && (document.scrollingElement.scrollTop = 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
+      resetDocumentScroll();
     };
-    const frame = window.requestAnimationFrame(resetScroll);
-    const timer = window.setTimeout(resetScroll, 120);
-    return () => { window.cancelAnimationFrame(frame); window.clearTimeout(timer); };
-  }, [route]);
+    resetScroll();
+  }, []);
   let page;
   if (route === "/metrics") page = <Suspense fallback={null}><MetricsTrainer/></Suspense>;
   else if (route === "/") page = <TypographedPage><Home hypothesis/></TypographedPage>;
