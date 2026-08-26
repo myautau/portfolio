@@ -272,7 +272,7 @@ const galleryCaptions = {
   "trinity-01-hq.png": "Сайт Trinity Monsters — описание вакансии в формате диалога",
   "trinity-02-hq.png": "Сайт Trinity Monsters — форма отклика на вакансию",
   "trinity-03-hq.png": "Сайт Trinity Monsters — знакомство с командой и условиями работы",
-  "trinity-04-hq.png": "Сайт Trinity Monsters — выбор вакансии и начало сценария",
+  "source/trinity-choice.png": "Сайт Trinity Monsters — выбор вакансии и начало сценария",
   "source/trinity-description.png": "Сайт Trinity Monsters — описание вакансии в формате диалога",
   "step-app-01-hq.png": "Step App — главная, инвентарь, тренировка и результаты",
   "step-app-02-hq.png": "Step App — Десктоп — Маркетплейс, кошелёк и профиль",
@@ -315,7 +315,7 @@ const galleryBackgrounds = {
   "trinity-01-hq.png": "#c8ff00",
   "trinity-02-hq.png": "#c8ff00",
   "trinity-03-hq.png": "#c8ff00",
-  "trinity-04-hq.png": "#c8ff00",
+  "source/trinity-choice.png": "#c8ff00",
   "flight-concept-hq.png": "#1b1b1b",
   "other-screen-hq.png": "#000",
   "other-portrait-01-hq.png": "#000",
@@ -369,7 +369,7 @@ const showAboutDetails = false;
 
 function AboutPane() {
   return <section className="about-pane" id="intro">
-    <div className="profile-row"><img src={`${A}cv-portrait.avif`} alt="Вика Матвеева"/><div><h1>Вика Матвеева</h1><p>Продуктовый дизайнер</p></div></div>
+    <div className="profile-row"><img src={`${A}cv-portrait.avif`} alt="Виктория Матвеева"/><div><h1>Виктория Матвеева</h1><p>Продуктовый дизайнер</p></div></div>
     <p className="lead">Создаю мобильные приложения, сайты и B2B-системы — от идеи и исследований до запуска. Соединяю эстетику, функциональность и задачи бизнеса.</p>
     <p className="availability"><i/>Открыта к предложениям</p>
     <Link href="https://t.me/myautau" className="light-button">Написать мне</Link>
@@ -502,7 +502,7 @@ const cases = {
     title: "Trinity Monsters", subtitle: "Концепт раздела вакансий в эстетике Windows 98", meta: [["Продукт","Раздел вакансий"],["Направление","Подбор персонала"],["Платформа","Web"]],
     intro: "Раздел вакансий в формате диалога и эстетике Windows 98.",
     sections: [["Идея","Превратить обычный список вакансий в интерактивный сценарий знакомства с командой."],["Механика","Пользователь выбирает направление, читает описание и оставляет отклик внутри последовательного диалога."],["Визуальный язык","Интерфейс отсылает к Windows 98 и сочетает чёрный фон с ярким зелёным акцентом."]],
-    gallery: ["trinity-04-hq.png","trinity-02-hq.png","trinity-03-hq.png","source/trinity-description.png"]
+    gallery: ["source/trinity-choice.png","trinity-02-hq.png","trinity-03-hq.png","source/trinity-description.png"]
   },
   "/avito-fashion": {
     title: "Avito Fashion", subtitle: "Концепция fashion-вертикали внутри Avito", meta: [["Продукт","Раздел маркетплейса"],["Направление","Маркетплейс"]],
@@ -533,7 +533,7 @@ const cases = {
       "trinity-01-hq.png",
       "trinity-02-hq.png",
       "trinity-03-hq.png",
-      "trinity-04-hq.png",
+      "source/trinity-choice.png",
       "stoloto-hq.png",
       "mentory-main.avif",
       "mentory-progress.avif",
@@ -883,7 +883,7 @@ function CasePage({ data }) {
 }
 
 function ResumePage() {
-  return <main className="resume-shell"><aside className="resume-summary"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><img className="resume-photo" src={`${A}cv-portrait.avif`} alt="Вика Матвеева"/><h1>Вика Матвеева</h1><p className="muted">Продуктовый дизайнер из Санкт-Петербурга с опытом более пяти лет.</p><Link href="mailto:myautau13@gmail.com" className="light-button">Связаться</Link></aside><section className="resume-content"><h2>Опыт работы.</h2>{jobs.map(([role,company,date,text],i)=><article className="resume-job" key={company}><CompanyLogo company={company} src={assetUrl(companyLogos[i][0])}/><div><h3><CompanyName company={company}/></h3><p>{role} · {date}</p><span>{text}</span></div></article>)}<h2>Инструменты.</h2><div className="resume-tools">Figma · ChatGPT · Codex · Claude · Framer</div></section></main>;
+  return <main className="resume-shell"><aside className="resume-summary"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><img className="resume-photo" src={`${A}cv-portrait.avif`} alt="Виктория Матвеева"/><h1>Виктория Матвеева</h1><p className="muted">Продуктовый дизайнер из Санкт-Петербурга с опытом более пяти лет.</p><Link href="mailto:myautau13@gmail.com" className="light-button">Связаться</Link></aside><section className="resume-content"><h2>Опыт работы.</h2>{jobs.map(([role,company,date,text],i)=><article className="resume-job" key={company}><CompanyLogo company={company} src={assetUrl(companyLogos[i][0])}/><div><h3><CompanyName company={company}/></h3><p>{role} · {date}</p><span>{text}</span></div></article>)}<h2>Инструменты.</h2><div className="resume-tools">Figma · ChatGPT · Codex · Claude · Framer</div></section></main>;
 }
 
 function ContactPage() { return <main className="contact-shell"><Link href="/" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><div><h1>Связаться.</h1><p>Предлагаю написать и назначить созвон для знакомства.</p><Link href="mailto:myautau13@gmail.com">myautau13@gmail.com</Link><Link href="https://t.me/myautau">Telegram: @myautau</Link></div></main>; }

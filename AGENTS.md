@@ -43,3 +43,4 @@ When implementing from a selected generated mock, treat that image as the source
 - Keep project «Направление» values in Russian for consistency; retain only proper technology names such as Web3 in their established spelling.
 - In case sections, keep the gap between a subsection heading and its description compact at 10px.
 - On returning to the homepage from a project, replay the same restrained fade, upward motion, blur reduction, and short stagger used for the project gallery cards.
+- Use a soft iOS-style continuous corner shape for project cards, gallery media, videos, and lightbox media. Keep a 10px circular-radius fallback for browsers without `corner-shape` support, and apply clipping only at the shared outer media container so nested radii never create uneven mobile corners.
