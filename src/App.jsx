@@ -273,6 +273,7 @@ const galleryCaptions = {
   "trinity-02-hq.png": "Сайт Trinity Monsters — форма отклика на вакансию",
   "trinity-03-hq.png": "Сайт Trinity Monsters — знакомство с командой и условиями работы",
   "trinity-04-hq.png": "Сайт Trinity Monsters — выбор вакансии и начало сценария",
+  "source/trinity-description.png": "Сайт Trinity Monsters — описание вакансии в формате диалога",
   "step-app-01-hq.png": "Step App — главная, инвентарь, тренировка и результаты",
   "step-app-02-hq.png": "Step App — Десктоп — Маркетплейс, кошелёк и профиль",
   "stoloto-hq.png": "Столото — сканирование и массовая проверка билетов",
@@ -324,12 +325,12 @@ const galleryBackgrounds = {
 };
 
 function ProjectCard({ project, priority = false }) {
-  return <Link href={project.href} className={`work-card${project.fit === "contain" ? " contain-media" : ""}${project.mockup ? " mockup-card" : ""}`} style={{ aspectRatio: project.ratio }}>
+  return <Link href={project.href} className={`work-card home-card-reveal-ready${project.fit === "contain" ? " contain-media" : ""}${project.mockup ? " mockup-card" : ""}`} style={{ aspectRatio: project.ratio }}>
     {project.mockup
-      ? <span className="mockup-cover"><span className="mockup-device"><img src={assetUrl(project.image)} alt="" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" style={{ objectPosition: project.mockupPosition || "center", "--mockup-scale": project.mockupScale || 1 }}/></span></span>
+      ? <span className="mockup-cover"><span className="mockup-device"><img src={assetUrl(project.image)} alt="" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" sizes="(max-width: 809px) 100vw, 35vw" style={{ objectPosition: project.mockupPosition || "center", "--mockup-scale": project.mockupScale || 1 }}/></span></span>
       : project.video
       ? <LazyVideo src={`${V}${project.video}`} poster={assetUrl(project.image)} autoPlay muted loop playsInline style={{ objectPosition: project.position || "center" }} aria-label={`${project.title} — видео-превью`}/>
-      : <img className={project.imageClass || ""} src={assetUrl(project.image)} alt="" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" style={{ objectPosition: project.position || "center", objectFit: project.fit || "cover" }}/>
+      : <img className={project.imageClass || ""} src={assetUrl(project.image)} alt="" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" sizes="(max-width: 809px) 100vw, 35vw" style={{ objectPosition: project.position || "center", objectFit: project.fit || "cover" }}/>
     }
     <span className="work-gradient"/>
     <span className="work-meta">
@@ -401,15 +402,33 @@ function WorkPane({ hypothesis = false }) {
   const left = hypothesis ? hypothesisLeft : workLeft;
   const right = hypothesis ? hypothesisRight : workRight;
   const mobileOrder = Array.from({ length: Math.max(left.length, right.length) }, (_, index) => [left[index], right[index]]).flat().filter(Boolean);
+  const paneRef = useRef(null);
   useLayoutEffect(() => {
-    const cards = [...document.querySelectorAll(".work-pane .work-card")];
-    cards.forEach(card => card.classList.add("home-card-reveal-ready"));
-    const frame = window.requestAnimationFrame(() => {
+    const pane = paneRef.current;
+    if (!pane) return undefined;
+    const isMobile = window.matchMedia("(max-width: 809px)").matches;
+    const visibleList = pane.querySelector(isMobile ? ".work-mobile-list" : ".work-desktop") || pane;
+    const cards = [...visibleList.querySelectorAll(".work-card")];
+    cards.forEach(card => card.classList.remove("home-card-reveal-visible"));
+    if (!("IntersectionObserver" in window)) {
       cards.forEach(card => card.classList.add("home-card-reveal-visible"));
+      return undefined;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("home-card-reveal-visible");
+        observer.unobserve(entry.target);
+      });
+    }, {
+      root: isMobile ? null : pane,
+      threshold: 0.12,
+      rootMargin: isMobile ? "0px 0px -8% 0px" : "0px 0px -6% 0px",
     });
-    return () => window.cancelAnimationFrame(frame);
+    cards.forEach(card => observer.observe(card));
+    return () => observer.disconnect();
   }, [hypothesis]);
-  return <section className={`work-pane${hypothesis ? " hypothesis-work" : ""}`} id="work"><div className="work-desktop"><div className="work-column">{left.map((p, index)=><ProjectCard key={p.title} project={p} priority={index === 0}/>)}</div><div className="work-column">{right.map((p, index)=><ProjectCard key={p.title} project={p} priority={index === 0}/>)}</div></div><div className="work-mobile-list">{mobileOrder.map((p, index)=><ProjectCard key={p.title} project={p} priority={index === 0}/>)}</div></section>;
+  return <section ref={paneRef} className={`work-pane${hypothesis ? " hypothesis-work" : ""}`} id="work"><div className="work-desktop"><div className="work-column">{left.map((p, index)=><ProjectCard key={p.title} project={p} priority={index === 0}/>)}</div><div className="work-column">{right.map((p, index)=><ProjectCard key={p.title} project={p} priority={index === 0}/>)}</div></div><div className="work-mobile-list">{mobileOrder.map((p, index)=><ProjectCard key={p.title} project={p} priority={index === 0}/>)}</div></section>;
 }
 
 function Home({ hypothesis = false }) {
@@ -459,7 +478,7 @@ const cases = {
   },
   "/vmeste": {
     title: "Вместе.ру", subtitle: "Редизайн раздела Навигатор", meta: [["Продукт","Мобильное приложение"],["Направление","Социальная сеть"],["Платформа","iOS, Android"]],
-    intro: "Социальная сеть для соседей от «Самолета»: чаты, объявления, услуги, домофон и сервисы управляющей компании.",
+    intro: "Социальная сеть для соседей от «Самолета»: чаты, объявления, услуги, домофон и сервисы управляющей компании.",
     sections: [
       ["О задаче","В приложении появился раздел частных объявлений. Нужно было встроить его в перегруженный Навигатор и сделать основные функции заметнее."],
       ["Проблемы","Функции было трудно находить, а разделы, действия и виджеты почти не отличались."],
@@ -483,7 +502,7 @@ const cases = {
     title: "Trinity Monsters", subtitle: "Концепт раздела вакансий в эстетике Windows 98", meta: [["Продукт","Раздел вакансий"],["Направление","Подбор персонала"],["Платформа","Web"]],
     intro: "Раздел вакансий в формате диалога и эстетике Windows 98.",
     sections: [["Идея","Превратить обычный список вакансий в интерактивный сценарий знакомства с командой."],["Механика","Пользователь выбирает направление, читает описание и оставляет отклик внутри последовательного диалога."],["Визуальный язык","Интерфейс отсылает к Windows 98 и сочетает чёрный фон с ярким зелёным акцентом."]],
-    gallery: ["trinity-01-hq.png","trinity-02-hq.png","trinity-03-hq.png","trinity-04-hq.png"]
+    gallery: ["trinity-04-hq.png","trinity-02-hq.png","trinity-03-hq.png","source/trinity-description.png"]
   },
   "/avito-fashion": {
     title: "Avito Fashion", subtitle: "Концепция fashion-вертикали внутри Avito", meta: [["Продукт","Раздел маркетплейса"],["Направление","Маркетплейс"]],
@@ -505,18 +524,19 @@ const cases = {
     title: "Другие проекты", subtitle: "", meta: [["Платформа","iOS, Android, Web"]],
     intro: "Реализованные проекты и концепты — мобильные приложения и сайты.",
     sections: [],
+    desktopLeftGalleryIndices: [0, 2, 4, 6, 8, 10, 11],
     gallery: [
       { type: "video", src: `${V}HRukF4ca0a0qfNKqktNqpjFcoL4.mp4`, caption: "Концепт мобильного приложения" },
+      { type: "video", src: `${V}TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4`, caption: "Концепт мобильного приложения" },
       "step-app-01-hq.png",
       "step-app-02-hq.png",
-      "stoloto-hq.png",
       "trinity-01-hq.png",
       "trinity-02-hq.png",
       "trinity-03-hq.png",
       "trinity-04-hq.png",
+      "stoloto-hq.png",
       "mentory-main.avif",
       "mentory-progress.avif",
-      { type: "video", src: `${V}TImWiJ2hRhf2RpzcqBJIbeuDxQw.mp4`, caption: "Концепт мобильного приложения" },
       "flight-concept-hq.png"
     ]
   },
@@ -550,12 +570,6 @@ const cases = {
     sections: [["О задаче","Сделать Web3 понятнее и объединить обучение, навигацию и прогресс."],["Структура","Выстроить материалы от базовых тем к сложным."],["Визуальный язык","Тёмная основа и зелёные акценты поддерживают технологичный характер."]],
     gallery: ["other-screen-hq.png","other-portrait-01-hq.png"]
   },
-  "/other": {
-    title: "Другие проекты", subtitle: "Мобильные приложения, сервисы, сайты и визуальные концепции", meta: [["Продукт","Подборка проектов"],["Направление","Цифровые продукты"],["Платформа","Mobile, Web"]],
-    intro: "Подборка работ для Web3, e-commerce, fintech, travel, HR и социальных продуктов.",
-    sections: [["Step App","Ключевые сценарии Web3-приложения: регистрация, кошелёк, маркетплейс, инвентарь и бег."],["Avito Fashion","Концепция вертикали для выгодных покупок одежды, обуви, аксессуаров и винтажа."],["Столото","Массовая проверка билетов разных лотерей через QR-сканирование и ручной ввод."],["Trinity Monsters","Раздел вакансий в эстетике Windows 98, построенный как диалог в мессенджере."],["Другие концепты","Туризм, отслеживание рейсов, инвестиции в недвижимость и образовательная Web3-платформа."]],
-    gallery: ["step-app-01-hq.png","step-app-02-hq.png","avito-fashion-hq.png","stoloto-hq.png","trinity-04-hq.png","trinity-02-hq.png","trinity-03-hq.png","trinity-01-hq.png","flight-concept-hq.png","other-screen-hq.png","other-portrait-01-hq.png","other-portrait-02-hq.png","other-ba1a805d27423031.webp"]
-  }
 };
 
 function CasePage({ data }) {
@@ -825,6 +839,7 @@ function CasePage({ data }) {
     const isVimeo = typeof item === "object" && item.type === "vimeo";
     const isMotion = isVideo || isVimeo;
     const src = isMotion ? item.src : assetUrl(item);
+    const mediaIndex = mediaEntries.indexOf(item);
     const isVmesteStories = !isMotion && item === "other-ba1a805d27423031.webp";
     const isPaddedConcept = !isMotion && data.title === "Другие проекты" && (item === "stoloto-hq.png" || item === "flight-concept-hq.png");
     const backgroundColor = !isMotion ? (data.title === "Манжерок" ? "#1b1b1b" : galleryBackgrounds[item]) : undefined;
@@ -833,11 +848,15 @@ function CasePage({ data }) {
       ? <><LazyVimeo src={src} title={caption}/><button className="gallery-vimeo-open" type="button" onClick={(event) => openLightbox(mediaItems.indexOf(src), event)} aria-label={`${caption}. Открыть на весь экран`}><span>{caption}</span></button></>
       : <button className={`gallery-image-button${isVideo ? " is-video" : ""}`} type="button" onClick={(event) => openLightbox(mediaItems.indexOf(src), event)} aria-label={`${caption}. Открыть на весь экран`}>{isVideo
         ? <LazyVideo src={src} autoPlay muted loop playsInline/>
-        : <img src={src} alt="" loading={mediaEntries.indexOf(item) > 1 ? "lazy" : "eager"} fetchPriority={mediaEntries.indexOf(item) === 0 ? "high" : "auto"} decoding="async"/>
+        : <img src={src} alt="" loading={mediaIndex > 1 ? "lazy" : "eager"} fetchPriority={mediaIndex < 2 ? "high" : "auto"} decoding="async" sizes="(max-width: 809px) calc(100vw - 32px), 35vw"/>
       }<span>{caption}</span></button>}</figure>;
   };
-  const leftGallery = data.gallery.filter((_, i) => i % 2 === 0);
-  const rightGallery = data.gallery.filter((_, i) => i % 2 === 1);
+  const leftGallery = data.desktopLeftGalleryIndices
+    ? data.desktopLeftGalleryIndices.map(index => data.gallery[index])
+    : data.gallery.filter((_, i) => i % 2 === 0);
+  const rightGallery = data.desktopLeftGalleryIndices
+    ? data.gallery.filter((_, i) => !data.desktopLeftGalleryIndices.includes(i))
+    : data.gallery.filter((_, i) => i % 2 === 1);
   const hasProjectCta = false;
   const lightboxEntry = lightboxIndex === null ? null : mediaEntries[lightboxIndex];
   const lightboxIsVideo = Boolean(lightboxEntry && typeof lightboxEntry === "object" && lightboxEntry.type === "video");
@@ -875,12 +894,17 @@ export function App() {
   const routeRef = useRef(route);
   const navigationTimerRef = useRef(null);
   const pendingMobileScrollRef = useRef(null);
-  const resetDocumentScroll = () => {
-    window.scrollTo(0, 0);
-    document.scrollingElement && (document.scrollingElement.scrollTop = 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+  const setDocumentScroll = (top) => {
+    const root = document.documentElement;
+    const previousScrollBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = "auto";
+    window.scrollTo({ top, left: 0, behavior: "auto" });
+    document.scrollingElement && (document.scrollingElement.scrollTop = top);
+    document.documentElement.scrollTop = top;
+    document.body.scrollTop = top;
+    root.style.scrollBehavior = previousScrollBehavior;
   };
+  const resetDocumentScroll = () => setDocumentScroll(0);
   useEffect(() => {
     const transitionTo = (nextRoute, href, mobileTarget = null) => {
       if (nextRoute === routeRef.current) return;
@@ -942,10 +966,10 @@ export function App() {
     const pendingScroll = pendingMobileScrollRef.current;
     pendingMobileScrollRef.current = null;
     if (Number.isFinite(pendingScroll?.scrollY)) {
-      window.scrollTo(0, pendingScroll.scrollY);
+      setDocumentScroll(pendingScroll.scrollY);
     } else if (pendingScroll?.mobileTarget) {
       const target = document.querySelector(pendingScroll.mobileTarget);
-      if (target) window.scrollTo(0, target.offsetTop);
+      if (target) setDocumentScroll(target.offsetTop);
     }
   }, [route]);
   let page;
@@ -953,13 +977,12 @@ export function App() {
   else if (route === "/") page = <TypographedPage><Home hypothesis/></TypographedPage>;
   else if (route === "/reference") page = <Suspense fallback={null}><ReferencePage/></Suspense>;
   else if (route === "/hypothesis-test") page = <TypographedPage><Home hypothesis/></TypographedPage>;
-  else if (route === "/hypothesis-concepts") page = <TypographedPage><CasePage data={cases["/other-projects"]}/></TypographedPage>;
   else if (cases[route]) page = <TypographedPage><CasePage data={cases[route]}/></TypographedPage>;
   else if (route === "/cv") page = <TypographedPage><ResumePage/></TypographedPage>;
   else if (route === "/contact") page = <TypographedPage><ContactPage/></TypographedPage>;
   else page = <TypographedPage><Home hypothesis/></TypographedPage>;
   const mobileSwitchMode = route === "/" || route === "/hypothesis-test"
     ? "home"
-    : (cases[route] || route === "/hypothesis-concepts" ? "project" : null);
+    : (cases[route] ? "project" : null);
   return <>{mobileSwitchMode && <MobileSwitch mode={mobileSwitchMode}/>}<div key={route} className={`route-view${isLeaving ? " route-view-leaving" : ""}`}>{page}</div></>;
 }
