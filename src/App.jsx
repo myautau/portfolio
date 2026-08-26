@@ -11,6 +11,7 @@ const A = `${import.meta.env.BASE_URL}assets/`;
 const V = `${import.meta.env.BASE_URL}videos/`;
 const BASE_PATH = import.meta.env.BASE_URL.replace(/\/$/, "");
 const NAVIGATION_EVENT = "portfolio:navigate";
+const MOBILE_RETURN_SCROLL_KEY = "portfolio:mobile-return-scroll";
 const withBasePath = href => href.startsWith("/") && !href.startsWith("//") ? `${BASE_PATH}${href}` || "/" : href;
 const stripBasePath = pathname => {
   const normalized = pathname.replace(/\/$/, "") || "/";
@@ -82,6 +83,15 @@ function Link({ href, children, className = "", onClick, mobileTarget = null, ..
     onClick?.(event);
     if (event.defaultPrevented || external || href.startsWith("#") || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
+    // Keep the exact viewport position of a project card on mobile so the
+    // case's Back link can return the user to the same place in the work list.
+    if (window.matchMedia("(max-width: 809px)").matches && href !== "/" && href.startsWith("/") && stripBasePath(window.location.pathname) === "/") {
+      try {
+        sessionStorage.setItem(MOBILE_RETURN_SCROLL_KEY, JSON.stringify({ scrollY: window.scrollY }));
+      } catch {
+        // Storage can be unavailable in private/restricted browsing contexts.
+      }
+    }
     window.dispatchEvent(new CustomEvent(NAVIGATION_EVENT, { detail: { href: targetHref, mobileTarget } }));
   };
   return <a href={targetHref} className={className} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined} onClick={navigate} {...props}>{children}</a>;
@@ -720,13 +730,14 @@ function CasePage({ data }) {
   const handleLightboxTouchStart = (event) => {
     if (!window.matchMedia("(pointer: coarse)").matches) return;
     if (event.touches.length === 2) {
-      const transform = lightboxTransformRef.current;
-      pinchGestureRef.current = {
-        type: "pinch",
-        distance: touchDistance(event.touches),
-        midpoint: touchMidpoint(event.touches),
-        transform,
-      };
+      // Let Safari handle the two-finger zoom natively. Unlike a CSS transform,
+      // native page zoom rerasterizes media at the current device scale.
+      pinchGestureRef.current = null;
+      swipeStartRef.current = null;
+      return;
+    }
+    if ((window.visualViewport?.scale || 1) > 1.01) {
+      pinchGestureRef.current = null;
       swipeStartRef.current = null;
       return;
     }
@@ -840,12 +851,14 @@ function CasePage({ data }) {
   const usesUnifiedCorners = ["Вместе.ру", "Манжерок", "Другие проекты"].includes(data.title);
   const lightboxBackground = !lightboxIsMotion ? (data.title === "Манжерок" ? "#1b1b1b" : galleryBackgrounds[lightboxEntry]) : undefined;
   const lightboxIsSkiOnDarkBackground = data.title === "Манжерок" && !lightboxIsMotion;
-  const imageTransform = { transform: `translate3d(${lightboxTransform.x}px, ${lightboxTransform.y}px, 0) scale(${lightboxTransform.scale})` };
+  const mediaTransform = lightboxTransform.scale > 1
+    ? { transform: `translate3d(${lightboxTransform.x}px, ${lightboxTransform.y}px, 0) scale(${lightboxTransform.scale})` }
+    : undefined;
   const lightboxMedia = lightboxIsVimeo
-    ? <div key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={`lightbox-vimeo-frame${lightboxIsVmeste ? " lightbox-vmeste-video" : ""}${lightboxTransform.scale > 1 ? " lightbox-pinched" : ""}`} style={{ transform: `translate3d(${lightboxTransform.x}px, ${lightboxTransform.y}px, 0) scale(${lightboxTransform.scale})` }}><iframe src={mediaItems[lightboxIndex]} title={lightboxCaption} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen/></div>
+    ? <div key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={`lightbox-vimeo-frame${lightboxIsVmeste ? " lightbox-vmeste-video" : ""}${lightboxTransform.scale > 1 ? " lightbox-pinched" : ""}`} style={mediaTransform}><iframe src={mediaItems[lightboxIndex]} title={lightboxCaption} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen/></div>
     : lightboxIsVideo
-      ? <video key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={`${lightboxIsVmeste ? "lightbox-vmeste-video " : ""}${lightboxTransform.scale > 1 ? "lightbox-pinched" : ""}`.trim() || undefined} style={{ transform: `translate3d(${lightboxTransform.x}px, ${lightboxTransform.y}px, 0) scale(${lightboxTransform.scale})` }} src={mediaItems[lightboxIndex]} autoPlay muted loop playsInline disablePictureInPicture disableRemotePlayback/>
-      : <img key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={`${isDesktopZoomed ? "lightbox-desktop-zoomed " : ""}${usesUnifiedCorners ? "lightbox-uniform " : ""}${lightboxIsVmeste ? "lightbox-vmeste " : ""}${lightboxIsVmesteStories ? "lightbox-stories " : ""}${lightboxIsPaddedConcept ? "lightbox-padded-concept " : ""}${lightboxIsSkiOnDarkBackground ? "lightbox-ski-dark" : ""}${lightboxTransform.scale > 1 ? " lightbox-pinched" : ""}`.trim()} style={{ ...(lightboxBackground ? { backgroundColor: lightboxBackground, "--media-background": lightboxBackground } : {}), ...imageTransform }} src={mediaItems[lightboxIndex]} width={lightboxDimensions?.[0]} height={lightboxDimensions?.[1]} alt="" onClick={toggleDesktopImageZoom} onLoad={(event) => event.currentTarget.classList.toggle("lightbox-tall", event.currentTarget.naturalHeight > event.currentTarget.naturalWidth)}/>;
+      ? <video key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={`${lightboxIsVmeste ? "lightbox-vmeste-video " : ""}${lightboxTransform.scale > 1 ? "lightbox-pinched" : ""}`.trim() || undefined} style={mediaTransform} src={mediaItems[lightboxIndex]} autoPlay muted loop playsInline disablePictureInPicture disableRemotePlayback/>
+      : <img key={mediaItems[lightboxIndex]} ref={lightboxMediaRef} className={`${isDesktopZoomed ? "lightbox-desktop-zoomed " : ""}${usesUnifiedCorners ? "lightbox-uniform " : ""}${lightboxIsVmeste ? "lightbox-vmeste " : ""}${lightboxIsVmesteStories ? "lightbox-stories " : ""}${lightboxIsPaddedConcept ? "lightbox-padded-concept " : ""}${lightboxIsSkiOnDarkBackground ? "lightbox-ski-dark" : ""}${lightboxTransform.scale > 1 ? " lightbox-pinched" : ""}`.trim()} style={{ ...(lightboxBackground ? { backgroundColor: lightboxBackground, "--media-background": lightboxBackground } : {}), ...mediaTransform }} src={mediaItems[lightboxIndex]} width={lightboxDimensions?.[0]} height={lightboxDimensions?.[1]} alt="" onClick={toggleDesktopImageZoom} onLoad={(event) => event.currentTarget.classList.toggle("lightbox-tall", event.currentTarget.naturalHeight > event.currentTarget.naturalWidth)}/>;
   const visibleSections = data.sections.filter(([title]) => !(data.hideSections || []).includes(title));
   return <><main className="case-shell"><section className="case-info" id="project-info"><Link href="/" mobileTarget="#work" className="back-button"><ArrowLeft aria-hidden="true"/>Назад</Link><header className={hasProjectCta ? "has-cta" : "no-cta"}><h1>{data.title}</h1><p>{data.subtitle}</p>{hasProjectCta && <Link href="https://t.me/myautau" className="light-button case-cta">Обсудить проект</Link>}</header><div className="case-meta">{data.meta.filter(([k]) => k !== "Продукт").map(([k,v])=><p key={k}><span>{k}</span><b>{v}</b></p>)}</div><p className={`case-intro${visibleSections.length === 0 ? " case-intro-last" : ""}`}>{data.intro}</p>{visibleSections.map(([title,text])=><article className={`case-text${title === "О задаче" ? " case-task" : ""}${title.startsWith("Результат") ? " case-result" : ""}`} key={title} id={title.toLowerCase().replaceAll(" ","-")}><h2>{title}</h2><p>{text}</p></article>)}<Link href="/" className="text-link case-all-projects-link">Все проекты <ArrowUpRight size={16}/></Link></section><section className={`case-gallery${usesUnifiedCorners ? " uniform-media-gallery" : ""}${data.title === "Вместе.ру" ? " vmeste-gallery" : ""}${data.title === "Манжерок" ? " ski-gallery" : ""}${data.gallery.length === 1 ? " single-media" : ""}${data.galleryLayout === "stack" ? " stack-media" : ""}`} id="gallery"><div className="gallery-desktop"><div>{leftGallery.map(renderImage)}</div><div>{rightGallery.map(renderImage)}</div></div><div className="gallery-mobile">{data.gallery.map(renderImage)}</div><div className="gallery-mobile-footer"><Link href="/" mobileTarget="#work" className="light-button gallery-all-projects">Все проекты</Link></div></section></main>{lightboxIndex !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Просмотр материалов проекта"><div ref={lightboxScrollRef} className={`lightbox-scroll${lightboxTransform.scale > 1 || isDesktopZoomed ? " zoomed" : ""}`} onClick={(event) => event.target === event.currentTarget && setLightboxIndex(null)} onTouchStart={handleLightboxTouchStart} onTouchMove={handleLightboxTouchMove} onTouchEnd={handleLightboxTouchEnd} onTouchCancel={() => { swipeStartRef.current = null; pinchGestureRef.current = null; }}>{lightboxMedia}</div><div className="lightbox-controls"><span className="lightbox-caption">{lightboxCaption}</span><button className="lightbox-close" type="button" onClick={() => setLightboxIndex(null)}>Закрыть</button>{mediaItems.length > 1 && <><button className="lightbox-arrow lightbox-prev" type="button" onClick={() => changeLightboxIndex(index => (index - 1 + mediaItems.length) % mediaItems.length)} aria-label="Предыдущий материал"><ChevronLeft aria-hidden="true"/></button><button className="lightbox-arrow lightbox-next" type="button" onClick={() => changeLightboxIndex(index => (index + 1) % mediaItems.length)} aria-label="Следующий материал"><ChevronRight aria-hidden="true"/></button><span className="lightbox-count">{lightboxIndex + 1} / {mediaItems.length}</span></>}</div></div>}</>;
 }
@@ -861,6 +874,7 @@ export function App() {
   const [isLeaving, setIsLeaving] = useState(false);
   const routeRef = useRef(route);
   const navigationTimerRef = useRef(null);
+  const pendingMobileScrollRef = useRef(null);
   const resetDocumentScroll = () => {
     window.scrollTo(0, 0);
     document.scrollingElement && (document.scrollingElement.scrollTop = 0);
@@ -874,17 +888,23 @@ export function App() {
       document.body.classList.add("route-transitioning");
 
       if (window.matchMedia("(max-width: 809px)").matches) {
+        let restoreScroll = null;
+        if (nextRoute === "/" && mobileTarget === "#work") {
+          try {
+            const saved = JSON.parse(sessionStorage.getItem(MOBILE_RETURN_SCROLL_KEY) || "null");
+            if (Number.isFinite(saved?.scrollY)) restoreScroll = saved.scrollY;
+            sessionStorage.removeItem(MOBILE_RETURN_SCROLL_KEY);
+          } catch {
+            restoreScroll = null;
+          }
+        }
+        pendingMobileScrollRef.current = { scrollY: restoreScroll, mobileTarget };
         if (href) window.history.pushState({}, "", href);
         routeRef.current = nextRoute;
         flushSync(() => {
           setIsLeaving(false);
           setRoute(nextRoute);
         });
-        resetDocumentScroll();
-        if (mobileTarget) {
-          const target = document.querySelector(mobileTarget);
-          if (target) window.scrollTo(0, target.offsetTop);
-        }
         window.requestAnimationFrame(() => document.body.classList.remove("route-transitioning"));
         return;
       }
@@ -919,6 +939,14 @@ export function App() {
   }, []);
   useLayoutEffect(() => {
     resetDocumentScroll();
+    const pendingScroll = pendingMobileScrollRef.current;
+    pendingMobileScrollRef.current = null;
+    if (Number.isFinite(pendingScroll?.scrollY)) {
+      window.scrollTo(0, pendingScroll.scrollY);
+    } else if (pendingScroll?.mobileTarget) {
+      const target = document.querySelector(pendingScroll.mobileTarget);
+      if (target) window.scrollTo(0, target.offsetTop);
+    }
   }, [route]);
   let page;
   if (route === "/metrics") page = <Suspense fallback={null}><MetricsTrainer/></Suspense>;

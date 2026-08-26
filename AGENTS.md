@@ -12,7 +12,8 @@ When implementing from a selected generated mock, treat that image as the source
 - The user specifically likes the reference typography. Use Switzer for supported glyphs and a visually close Cyrillic fallback for Russian copy.
 - Preserve Viktoria Matveeva's portfolio content, projects, resume, contact details, and existing local media assets when applying this design direction.
 - Keep the untouched visual reference recreation available separately at `/reference` for side-by-side comparison with Viktoria's portfolio.
-- Route changes on mobile and desktop should feel like the Framer reference: fade the current page with a slight blur and lift, reveal the next page softly from below, and always start the destination at the top without visibly scrolling the outgoing page.
+- On mobile, returning from a project via the case Back control should restore the approximate scroll position of the project card on the home Work section.
+- Route changes on mobile and desktop should feel like the Framer reference: fade the current page with a slight blur and lift, reveal the next page softly from below, and start newly opened destinations at the top without visibly scrolling the outgoing page; the mobile project Back control restores the saved Work-card position.
 - Freeze document scrolling during route handoff so navigation never shows a scroll-to-top jump.
 - Reset document scroll in a route-keyed layout effect, before the incoming page paints; never defer it to a later animation frame.
 - Match the Framer reference's gallery reveal behavior: each media card appears once when it enters the active scroll viewport, with opacity-only spring-like easing over roughly 1.5 seconds, no lift, scale, blur, or stagger. On mobile, cards reveal sequentially down the single column as the page scrolls.
